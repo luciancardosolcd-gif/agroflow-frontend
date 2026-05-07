@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #16a34a;
+  --primary-dark: #14532d;
+  --earth: #d4821e;
+  --bg: #0a0f0a;
+  --surface: #111811;
+  --surface2: #1a251a;
+  --border: #243324;
+  --text: #e8f5e9;
+  --text-muted: #6b8f6b;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display { font-family: 'Playfair Display', serif; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+@layer components {
+  .card {
+    @apply bg-[#111811] border border-[#243324] rounded-xl p-6;
+  }
+  .btn-primary {
+    @apply bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-[#1a251a] hover:bg-[#243324] text-green-400 border border-[#243324] px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2;
+  }
+  .input {
+    @apply bg-[#1a251a] border border-[#243324] text-green-100 rounded-lg px-4 py-2.5 w-full focus:outline-none focus:border-green-600 transition-colors placeholder-[#6b8f6b];
+  }
+  .badge-ativo {
+    @apply bg-green-900/50 text-green-400 border border-green-800 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-inativo {
+    @apply bg-red-900/50 text-red-400 border border-red-800 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+}
