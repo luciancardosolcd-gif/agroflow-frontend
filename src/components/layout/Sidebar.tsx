@@ -31,23 +31,16 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 min-h-screen bg-[#0d160d] border-r border-[#1a251a] flex flex-col">
-      <div className="p-6 border-b border-[#1a251a]">
-       <svg width="200" height="70" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
-          <g transform="translate(300, 100)">
-            <line x1="-18" y1="30" x2="-8" y2="-10" stroke="#3a7d3a" strokeWidth="2.5" strokeLinecap="round"/>
-            <g transform="translate(-12, -42) rotate(-25)">
-              <path d="M0,0 C8,-18 26,-22 28,-10 C30,2 18,18 0,20 C-8,12 -6,-2 0,0 Z" fill="#3a7d3a"/>
-              <line x1="0" y1="0" x2="14" y2="10" stroke="#2d6b2d" strokeWidth="1" strokeLinecap="round"/>
-              <line x1="4" y1="-6" x2="18" y2="2" stroke="#2d6b2d" strokeWidth="0.8" strokeLinecap="round"/>
-              <line x1="8" y1="-12" x2="22" y2="-4" stroke="#2d6b2d" strokeWidth="0.8" strokeLinecap="round"/>
-              <line x1="2" y1="4" x2="10" y2="16" stroke="#2d6b2d" strokeWidth="0.8" strokeLinecap="round"/>
-            </g>
-            <text x="-170" y="22" fontFamily="Arial Black, Arial, sans-serif" fontWeight="900" fontSize="72" fill="#3a7d3a" letterSpacing="-1">Agro</text>
-            <text x="24" y="22" fontFamily="Arial Black, Arial, sans-serif" fontWeight="900" fontSize="72" fill="#1e3a5f" letterSpacing="-1">Flow</text>
-            <text x="0" y="58" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="18" fill="#5a8a5a" textAnchor="middle" letterSpacing="3">Gestão Agrícola</text>
-          </g>
-        </svg>
-      </div>
+     <div className="px-5 py-5 border-b border-[#1a251a]">
+  <div style={{lineHeight: '1'}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+      <span style={{fontSize: '28px', fontWeight: '900', color: '#3a7d3a', fontFamily: 'Arial Black, sans-serif'}}>Agro</span>
+      <span style={{fontSize: '28px', fontWeight: '900', color: '#1e3a5f', fontFamily: 'Arial Black, sans-serif'}}>Flow</span>
+      <span style={{fontSize: '22px'}}>🌿</span>
+    </div>
+    <div style={{fontSize: '11px', color: '#5a8a5a', letterSpacing: '2px', marginTop: '3px'}}>Gestão Agrícola</div>
+  </div>
+</div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
