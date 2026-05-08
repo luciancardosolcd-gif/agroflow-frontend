@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import {
   LayoutDashboard, Users, DollarSign, FileText, Package,
-  UserCheck, Truck, Settings, Leaf, LogOut, ChevronRight, Cog
+  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings
 } from 'lucide-react'
 
 const navItems = [
@@ -32,15 +32,21 @@ export default function Sidebar() {
   return (
     <aside className="w-64 min-h-screen bg-[#0d160d] border-r border-[#1a251a] flex flex-col">
       <div className="p-6 border-b border-[#1a251a]">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-green-700 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Leaf className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="font-display text-lg text-green-100">AgroFlow</div>
-            <div className="text-green-700 text-xs">Gestão Agrícola</div>
-          </div>
-        </div>
+        <svg width="160" height="52" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(300, 100)">
+            <line x1="-18" y1="30" x2="-8" y2="-10" stroke="#3a7d3a" strokeWidth="2.5" strokeLinecap="round"/>
+            <g transform="translate(-12, -42) rotate(-25)">
+              <path d="M0,0 C8,-18 26,-22 28,-10 C30,2 18,18 0,20 C-8,12 -6,-2 0,0 Z" fill="#3a7d3a"/>
+              <line x1="0" y1="0" x2="14" y2="10" stroke="#2d6b2d" strokeWidth="1" strokeLinecap="round"/>
+              <line x1="4" y1="-6" x2="18" y2="2" stroke="#2d6b2d" strokeWidth="0.8" strokeLinecap="round"/>
+              <line x1="8" y1="-12" x2="22" y2="-4" stroke="#2d6b2d" strokeWidth="0.8" strokeLinecap="round"/>
+              <line x1="2" y1="4" x2="10" y2="16" stroke="#2d6b2d" strokeWidth="0.8" strokeLinecap="round"/>
+            </g>
+            <text x="-170" y="22" fontFamily="Arial Black, Arial, sans-serif" fontWeight="900" fontSize="72" fill="#3a7d3a" letterSpacing="-1">Agro</text>
+            <text x="24" y="22" fontFamily="Arial Black, Arial, sans-serif" fontWeight="900" fontSize="72" fill="#1e3a5f" letterSpacing="-1">Flow</text>
+            <text x="0" y="58" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="18" fill="#5a8a5a" textAnchor="middle" letterSpacing="3">Gestão Agrícola</text>
+          </g>
+        </svg>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
