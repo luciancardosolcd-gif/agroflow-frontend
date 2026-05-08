@@ -20,7 +20,7 @@ const navItems = [
 ]
 
 const Logo = () => (
-  <svg width="200" height="80" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
+  <svg width="240" height="95" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="lg" x1="0%" y1="100%" x2="60%" y2="0%">
         <stop offset="0%" stopColor="#7cc442"/>
@@ -35,7 +35,7 @@ const Logo = () => (
       </g>
       <text x="-242" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#3a6e30" letterSpacing="-2">Agro</text>
       <text x="2" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#1a3260" letterSpacing="-2">Flow</text>
-      <text x="0" y="68" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="30" fill="#5a8a5a" textAnchor="middle" letterSpacing="5">Gestão Agrícola</text>
+      <text x="0" y="88" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="30" fill="#5a8a5a" textAnchor="middle" letterSpacing="5">Gestão Agrícola</text>
     </g>
   </svg>
 )
