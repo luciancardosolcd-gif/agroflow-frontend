@@ -32,7 +32,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 min-h-screen bg-[#0d160d] border-r border-[#1a251a] flex flex-col">
       <div className="p-6 border-b border-[#1a251a]">
-        <svg width="160" height="52" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+       <svg width="200" height="70" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
           <g transform="translate(300, 100)">
             <line x1="-18" y1="30" x2="-8" y2="-10" stroke="#3a7d3a" strokeWidth="2.5" strokeLinecap="round"/>
             <g transform="translate(-12, -42) rotate(-25)">
