@@ -19,6 +19,27 @@ const navItems = [
   { href: '/users', label: 'Usuários', icon: Users },
 ]
 
+const Logo = () => (
+  <svg width="200" height="80" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="lg" x1="0%" y1="100%" x2="60%" y2="0%">
+        <stop offset="0%" stopColor="#7cc442"/>
+        <stop offset="100%" stopColor="#a8d96a"/>
+      </linearGradient>
+    </defs>
+    <g transform="translate(340, 145)">
+      <g transform="translate(-14, -65) scale(0.65)">
+        <path d="M 0 105 C 2 88 4 72 6 58" stroke="#5a9e2e" strokeWidth="7" fill="none" strokeLinecap="round"/>
+        <path d="M 6 58 C -5 45 -38 18 -42 -18 C -46 -52 -18 -82 8 -90 C 34 -82 52 -52 48 -18 C 44 18 18 45 6 58 Z" fill="url(#lg)"/>
+        <path d="M 6 55 C 2 25 -6 -15 4 -85" stroke="white" strokeWidth="8" fill="none" strokeLinecap="round"/>
+      </g>
+      <text x="-242" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#3a6e30" letterSpacing="-2">Agro</text>
+      <text x="2" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#1a3260" letterSpacing="-2">Flow</text>
+      <text x="0" y="68" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="18" fill="#5a8a5a" textAnchor="middle" letterSpacing="5">Gestão Agrícola</text>
+    </g>
+  </svg>
+)
+
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
@@ -31,16 +52,9 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 min-h-screen bg-[#0d160d] border-r border-[#1a251a] flex flex-col">
-     <div className="px-5 py-5 border-b border-[#1a251a]">
-  <div style={{lineHeight: '1'}}>
-    <div style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
-      <span style={{fontSize: '28px', fontWeight: '900', color: '#3a7d3a', fontFamily: 'Arial Black, sans-serif'}}>Agro</span>
-      <span style={{fontSize: '28px', fontWeight: '900', color: '#1e3a5f', fontFamily: 'Arial Black, sans-serif'}}>Flow</span>
-      <span style={{fontSize: '22px'}}>🌿</span>
-    </div>
-    <div style={{fontSize: '11px', color: '#5a8a5a', letterSpacing: '2px', marginTop: '3px'}}>Gestão Agrícola</div>
-  </div>
-</div>
+      <div className="px-4 py-4 border-b border-[#1a251a]">
+        <Logo />
+      </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {navItems.map(({ href, label, icon: Icon }) => {
@@ -60,26 +74,13 @@ export default function Sidebar() {
         })}
       </nav>
 
-     <div className="px-4 py-4 border-b border-[#1a251a]">
-  <svg width="250" height="80" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="lg" x1="0%" y1="100%" x2="60%" y2="0%">
-        <stop offset="0%" stopColor="#7cc442"/>
-        <stop offset="100%" stopColor="#a8d96a"/>
-      </linearGradient>
-    </defs>
-    <g transform="translate(340, 145)">
-      <g transform="translate(-14, -65) scale(0.65)">
-        <path d="M 0 105 C 2 88 4 72 6 58" stroke="#5a9e2e" strokeWidth="7" fill="none" strokeLinecap="round"/>
-        <path d="M 6 58 C -5 45 -38 18 -42 -18 C -46 -52 -18 -82 8 -90 C 34 -82 52 -52 48 -18 C 44 18 18 45 6 58 Z" fill="url(#lg)"/>
-        <path d="M 6 55 C 2 25 -6 -15 4 -85" stroke="white" strokeWidth="8" fill="none" strokeLinecap="round"/>
-      </g>
-      <text x="-242" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#3a6e30" letterSpacing="-2">Agro</text>
-      <text x="2" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#1a3260" letterSpacing="-2">Flow</text>
-      <text x="0" y="68" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="18" fill="#5a8a5a" textAnchor="middle" letterSpacing="5">Gestão Agrícola</text>
-    </g>
-  </svg>
-</div>
+      <div className="p-4 border-t border-[#1a251a]">
+        <button onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-900/20 w-full transition-all">
+          <LogOut className="w-4 h-4" />
+          Sair do sistema
+        </button>
+      </div>
     </aside>
   )
 }
