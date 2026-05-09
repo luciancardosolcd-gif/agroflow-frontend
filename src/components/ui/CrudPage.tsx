@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import api from '@/lib/api'
+import Cookies from 'js-cookie'
 import { Plus, Trash2, Edit, Search, RefreshCw, X } from 'lucide-react'
 
 interface CrudPageProps {
@@ -19,6 +20,18 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
   const [form, setForm] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [perfil, setPerfil] = useState('')
+
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) setPerfil(JSON.parse(u).perfil)
+  }, [])
+
+  const isAdmin = perfil === 'admin'
+  const isGestor = perfil === 'gestor'
+  const canCreate = isAdmin || isGestor || perfil === 'operador'
+  const canEdit = isAdmin || isGestor
+  const canDelete = isAdmin
 
   const load = async () => {
     setLoading(true)
@@ -87,7 +100,9 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
         </div>
         <div className="flex gap-3">
           <button onClick={load} className="btn-secondary"><RefreshCw className="w-4 h-4" /></button>
-          <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" />Novo</button>
+          {canCreate && (
+            <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" />Novo</button>
+          )}
         </div>
       </div>
 
@@ -116,7 +131,9 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
                   {displayFields.map(f => (
                     <th key={f.key} className="text-left py-3 px-4 text-green-600 font-medium">{f.label}</th>
                   ))}
-                  <th className="text-right py-3 px-4 text-green-600 font-medium">Ações</th>
+                  {(canEdit || canDelete) && (
+                    <th className="text-right py-3 px-4 text-green-600 font-medium">Ações</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -133,18 +150,24 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
                         )}
                       </td>
                     ))}
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => openEdit(item)}
-                          className="w-8 h-8 bg-[#1a251a] hover:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 transition-colors border border-[#243324]">
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button onClick={() => handleDelete(item.id)}
-                          className="w-8 h-8 bg-[#1a251a] hover:bg-red-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-red-400 transition-colors border border-[#243324]">
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
+                    {(canEdit || canDelete) && (
+                      <td className="py-3 px-4">
+                        <div className="flex items-center justify-end gap-2">
+                          {canEdit && (
+                            <button onClick={() => openEdit(item)}
+                              className="w-8 h-8 bg-[#1a251a] hover:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 transition-colors border border-[#243324]">
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button onClick={() => handleDelete(item.id)}
+                              className="w-8 h-8 bg-[#1a251a] hover:bg-red-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-red-400 transition-colors border border-[#243324]">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -153,7 +176,6 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[#111811] border border-[#243324] rounded-2xl w-full max-w-lg shadow-2xl">
@@ -190,3 +212,4 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
     </div>
   )
 }
+                  
