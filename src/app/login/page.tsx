@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 const Logo = () => (
-  <svg width="200" height="80" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
+<svg width="340" height="130" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="lg" x1="0%" y1="100%" x2="60%" y2="0%">
         <stop offset="0%" stopColor="#7cc442"/>
