@@ -2,9 +2,10 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
+import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, DollarSign, FileText, Package,
-  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings
+  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings, Shield, Tractor
 } from 'lucide-react'
 
 const navItems = [
@@ -22,7 +23,7 @@ const navItems = [
 ]
 
 const Logo = () => (
-  <svg width="240" height="95" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
+  <svg width="200" height="80" viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="lg" x1="0%" y1="100%" x2="60%" y2="0%">
         <stop offset="0%" stopColor="#7cc442"/>
@@ -37,7 +38,7 @@ const Logo = () => (
       </g>
       <text x="-242" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#3a6e30" letterSpacing="-2">Agro</text>
       <text x="2" y="28" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="88" fill="#1a3260" letterSpacing="-2">Flow</text>
-      <text x="0" y="88" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="30" fill="#5a8a5a" textAnchor="middle" letterSpacing="5">Gestão Agrícola</text>
+      <text x="0" y="88" fontFamily="Arial, sans-serif" fontWeight="400" fontSize="26" fill="#5a8a5a" textAnchor="middle" letterSpacing="5">Gestão Agrícola</text>
     </g>
   </svg>
 )
@@ -45,12 +46,20 @@ const Logo = () => (
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const [perfil, setPerfil] = useState('')
+
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) setPerfil(JSON.parse(u).perfil)
+  }, [])
 
   const handleLogout = () => {
     Cookies.remove('accessToken')
     Cookies.remove('user')
     router.push('/login')
   }
+
+  const itemsFiltrados = navItems.filter(item => item.perfis.includes(perfil))
 
   return (
     <aside className="w-64 min-h-screen bg-[#0d160d] border-r border-[#1a251a] flex flex-col">
@@ -59,7 +68,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {itemsFiltrados.map(({ href, label, icon: Icon }) => {
           const active = pathname === href
           return (
             <Link key={href} href={href}
