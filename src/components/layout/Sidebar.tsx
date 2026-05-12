@@ -8,15 +8,17 @@ import {
 } from 'lucide-react'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/clientes', label: 'Clientes', icon: UserCheck },
-  { href: '/financeiro', label: 'Financeiro', icon: DollarSign },
-  { href: '/contratos', label: 'Contratos', icon: FileText },
-  { href: '/estoque', label: 'Estoque', icon: Package },
-  { href: '/fornecedores', label: 'Fornecedores', icon: Truck },
-  { href: '/maquinarios', label: 'Maquinários', icon: Cog },
-  { href: '/documentos', label: 'Documentos', icon: Settings },
-  { href: '/users', label: 'Usuários', icon: Users },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante', 'produtor'] },
+  { href: '/clientes', label: 'Clientes', icon: UserCheck, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'] },
+  { href: '/financeiro', label: 'Financeiro', icon: DollarSign, perfis: ['admin', 'gestor', 'operador'] },
+  { href: '/contratos', label: 'Contratos', icon: FileText, perfis: ['admin', 'gestor', 'operador'] },
+  { href: '/estoque', label: 'Estoque', icon: Package, perfis: ['admin', 'gestor', 'operador', 'visitante'] },
+  { href: '/fornecedores', label: 'Fornecedores', icon: Truck, perfis: ['admin', 'gestor', 'operador'] },
+  { href: '/maquinarios', label: 'Maquinários', icon: Cog, perfis: ['admin', 'gestor', 'operador'] },
+  { href: '/documentos', label: 'Documentos', icon: Settings, perfis: ['admin', 'gestor', 'operador'] },
+  { href: '/produtor', label: 'Painel Produtor', icon: Tractor, perfis: ['admin', 'produtor'] },
+  { href: '/users', label: 'Usuários', icon: Users, perfis: ['admin'] },
+  { href: '/admin', label: 'Admin Panel', icon: Shield, perfis: ['admin'] },
 ]
 
 const Logo = () => (
