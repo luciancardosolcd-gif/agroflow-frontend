@@ -55,12 +55,12 @@ export default function EstoquePage() {
     setShowModal(true)
   }
 
-  const openEdit = (item: Record<string, string>) => {
+ const openEdit = (item: Record<string, string>) => {
     setEditing(item)
     setForm({
       nome: item.nome, descricao: item.descricao || '',
       quantidade: item.quantidade, unidade: item.unidade || 'LT',
-      tipo: item.tipo || '', lote: item.lote || '',
+      lote: item.lote || '',
       vencimento: item.vencimento ? item.vencimento.split('T')[0] : '',
       valorUnitario: item.valorUnitario || '', categoria: item.categoria || '',
       status: item.status
@@ -73,10 +73,15 @@ export default function EstoquePage() {
     setSaving(true)
     setError('')
     try {
+      const payload: Record<string, string> = {}
+      const allowed = ['nome','descricao','quantidade','unidade','lote','vencimento','valorUnitario','categoria','status']
+      Object.entries(form).forEach(([key, value]) => {
+        if (allowed.includes(key) && value !== '' && value !== undefined) payload[key] = value
+      })
       if (editing) {
-        await api.put(`/estoque/${editing.id}`, form)
+        await api.put(`/estoque/${editing.id}`, payload)
       } else {
-        await api.post('/estoque', form)
+        await api.post('/estoque', payload)
       }
       setShowModal(false)
       load()
