@@ -138,4 +138,87 @@ export default function UsersPage() {
                         {item.perfil}
                       </span>
                     </td>
-                    <td className="p
+                    <td className="py-3 px-4">
+                      <span className={item.status === 'ativo' ? 'badge-ativo' : 'badge-inativo'}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-green-600 text-xs">
+                      {item.ultimoAcesso ? new Date(item.ultimoAcesso).toLocaleString('pt-BR') : 'Nunca'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => handleToggleStatus(item)}
+                          title={item.status === 'ativo' ? 'Bloquear' : 'Ativar'}
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors border ${item.status === 'ativo' ? 'bg-[#1a251a] hover:bg-red-900/40 text-green-600 hover:text-red-400 border-[#243324]' : 'bg-[#1a251a] hover:bg-green-900/40 text-red-500 hover:text-green-400 border-[#243324]'}`}>
+                          {item.status === 'ativo' ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
+                        </button>
+                        <button onClick={() => openEdit(item)}
+                          className="w-8 h-8 bg-[#1a251a] hover:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 transition-colors border border-[#243324]">
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={() => handleDelete(item.id)}
+                          className="w-8 h-8 bg-[#1a251a] hover:bg-red-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-red-400 transition-colors border border-[#243324]">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#111811] border border-[#243324] rounded-2xl w-full max-w-lg shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-[#243324]">
+              <h2 className="font-display text-xl text-green-100">{editing ? 'Editar Usuário' : 'Novo Usuário'}</h2>
+              <button onClick={() => setShowModal(false)} className="text-green-600 hover:text-green-400">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {error && <div className="bg-red-900/30 border border-red-800 text-red-400 rounded-lg px-4 py-3 text-sm">{error}</div>}
+              <div>
+                <label className="text-green-400 text-sm font-medium block mb-2">Nome <span className="text-red-500">*</span></label>
+                <input value={form.nome || ''} onChange={e => setForm({...form, nome: e.target.value})} className="input" placeholder="Nome completo" />
+              </div>
+              <div>
+                <label className="text-green-400 text-sm font-medium block mb-2">Email <span className="text-red-500">*</span></label>
+                <input type="email" value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} className="input" placeholder="email@agroflow.com" />
+              </div>
+              {!editing && (
+                <div>
+                  <label className="text-green-400 text-sm font-medium block mb-2">Senha <span className="text-red-500">*</span></label>
+                  <input type="password" value={form.senha || ''} onChange={e => setForm({...form, senha: e.target.value})} className="input" placeholder="Mínimo 6 caracteres" />
+                </div>
+              )}
+              <div>
+                <label className="text-green-400 text-sm font-medium block mb-2">Perfil</label>
+                <select value={form.perfil || 'operador'} onChange={e => setForm({...form, perfil: e.target.value})} className="input">
+                  {perfis.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-green-400 text-sm font-medium block mb-2">Status</label>
+                <select value={form.status || 'ativo'} onChange={e => setForm({...form, status: e.target.value})} className="input">
+                  <option value="ativo">Ativo</option>
+                  <option value="inativo">Inativo</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-[#243324]">
+              <button onClick={() => setShowModal(false)} className="btn-secondary flex-1 justify-center">Cancelar</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
+                {saving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
