@@ -54,7 +54,7 @@ export function useDashboardFinanceiro(periodo: PeriodoFiltro = 'MES_ATUAL') {
     try {
       setLoading(true)
       setError(null)
-      const response = await api.get(`/financeiro/dashboard?periodo=${periodo}`)
+      const response = await api.get(`/fin-dashboard?periodo=${periodo}`)
       setData(response.data)
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Erro ao carregar dashboard')
