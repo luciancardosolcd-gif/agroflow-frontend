@@ -2,7 +2,9 @@
 import { useState } from 'react'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
+import PainelCustoRealizado from '@/components/PainelCustoRealizado'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
+import Cookies from 'js-cookie'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const formatCurrency = (value: number) =>
@@ -16,14 +18,8 @@ const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
 ]
 
 // ─── Card de KPI ─────────────────────────────────────────────────────────────
-function KpiCard({
-  title, value, icon, color, sub,
-}: {
-  title: string
-  value: string
-  icon: React.ReactNode
-  color: string
-  sub?: string
+function KpiCard({ title, value, icon, color, sub }: {
+  title: string; value: string; icon: React.ReactNode; color: string; sub?: string
 }) {
   return (
     <div className={`rounded-2xl p-5 border ${color} flex flex-col gap-3`}>
@@ -39,26 +35,7 @@ function KpiCard({
   )
 }
 
-// ─── Barra de progresso simples ───────────────────────────────────────────────
-function BarraCategoria({ label, total, max }: { label: string; total: number; max: number }) {
-  const pct = max > 0 ? Math.round((total / max) * 100) : 0
-  return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between text-xs text-gray-400">
-        <span>{label}</span>
-        <span>{formatCurrency(total)}</span>
-      </div>
-      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full transition-all duration-700"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-    </div>
-  )
-}
-
-// ─── Gráfico de evolução mensal (barras simples em CSS) ───────────────────────
+// ─── Gráfico de evolução mensal ───────────────────────────────────────────────
 function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; despesas: number }[] }) {
   const max = Math.max(...dados.flatMap((d) => [d.receitas, d.despesas]), 1)
   return (
@@ -92,10 +69,10 @@ const fields = [
   { key: 'descricao', label: 'Descrição', required: true },
   { key: 'valor', label: 'Valor', type: 'number' },
   { key: 'tipo', label: 'Tipo', type: 'select', options: ['RECEITA', 'DESPESA'] },
-  { key: 'categoria', label: 'Categoria' },
   { key: 'data', label: 'Data', type: 'date' },
-  { key: 'status', label: 'Status' },
+  { key: 'status', label: 'Status', type: 'select', options: ['pendente', 'pago', 'Em Aberto'] },
   { key: 'dataVencimento', label: 'Data Vencimento', type: 'date' },
+  { key: 'observacao', label: 'Observação' },
 ]
 
 // ─── Página principal ─────────────────────────────────────────────────────────
@@ -103,11 +80,14 @@ export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const { data, loading, error, refetch } = useDashboardFinanceiro(periodo)
 
+  // Pegar token para o PainelCustoRealizado
+  const token = typeof window !== 'undefined'
+    ? (Cookies.get('token') || localStorage.getItem('accessToken') || '')
+    : ''
+
   const resumo = data?.resumo
-  const categorias = data?.despesasPorCategoria ?? []
   const evolucao = data?.evolucaoMensal ?? []
   const recentes = data?.lancamentosRecentes ?? []
-  const maxCategoria = Math.max(...categorias.map((c) => c.total), 1)
 
   return (
     <div className="space-y-8">
@@ -129,9 +109,7 @@ export default function FinanceiroPage() {
             className="bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
           >
             {PERIODOS.map((p) => (
-              <option key={p.value} value={p.value} className="bg-gray-900">
-                {p.label}
-              </option>
+              <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
             ))}
           </select>
           <button
@@ -179,7 +157,7 @@ export default function FinanceiroPage() {
         />
       </div>
 
-      {/* ── Gráficos ── */}
+      {/* ── Evolução mensal + Painel Custo Realizado ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Evolução mensal */}
         <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
@@ -199,21 +177,8 @@ export default function FinanceiroPage() {
           )}
         </div>
 
-        {/* Despesas por categoria */}
-        <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Despesas por Categoria</h3>
-          {loading ? (
-            <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
-          ) : categorias.length === 0 ? (
-            <p className="text-gray-500 text-sm text-center py-8">Sem despesas no período</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {categorias.map((c) => (
-                <BarraCategoria key={c.categoria} label={c.categoria} total={c.total} max={maxCategoria} />
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Painel Custo Realizado — estilo Aegro */}
+        {token && <PainelCustoRealizado token={token} />}
       </div>
 
       {/* ── Lançamentos recentes ── */}
@@ -225,7 +190,9 @@ export default function FinanceiroPage() {
               <div key={l.id} className="flex items-center justify-between py-3">
                 <div>
                   <p className="text-sm text-white">{l.descricao}</p>
-                  <p className="text-xs text-gray-400">{l.categoria} · {new Date(l.data).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-xs text-gray-400">
+                    {l.categoria} · {new Date(l.data).toLocaleDateString('pt-BR')}
+                  </p>
                 </div>
                 <span className={`text-sm font-semibold ${l.tipo === 'RECEITA' ? 'text-emerald-400' : 'text-red-400'}`}>
                   {l.tipo === 'RECEITA' ? '+' : '-'}{formatCurrency(l.valor)}
@@ -246,3 +213,5 @@ export default function FinanceiroPage() {
     </div>
   )
 }
+
+
