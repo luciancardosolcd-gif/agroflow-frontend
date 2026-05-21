@@ -1,10 +1,9 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
-import Cookies from 'js-cookie'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 const formatCurrency = (value: number) =>
@@ -78,13 +77,7 @@ const fields = [
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
-  const [token, setToken] = useState('')
   const { data, loading, error, refetch } = useDashboardFinanceiro(periodo)
-
-  // Ler token no client (cookie só disponível no browser)
-  useEffect(() => {
-    setToken(Cookies.get('accessToken') || '')
-  }, [])
 
   const resumo = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
@@ -179,7 +172,7 @@ export default function FinanceiroPage() {
         </div>
 
         {/* Painel Custo Realizado — estilo Aegro */}
-        {token && <PainelCustoRealizado token={token} />}
+        <PainelCustoRealizado />
       </div>
 
       {/* ── Lançamentos recentes ── */}
