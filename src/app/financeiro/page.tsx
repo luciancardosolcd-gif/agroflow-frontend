@@ -81,9 +81,7 @@ export default function FinanceiroPage() {
   const { data, loading, error, refetch } = useDashboardFinanceiro(periodo)
 
   // Pegar token para o PainelCustoRealizado
-  const token = typeof window !== 'undefined'
-    ? (Cookies.get('token') || localStorage.getItem('accessToken') || '')
-    : ''
+  const token = Cookies.get('accessToken') || ''
 
   const resumo = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
@@ -213,5 +211,3 @@ export default function FinanceiroPage() {
     </div>
   )
 }
-
-
