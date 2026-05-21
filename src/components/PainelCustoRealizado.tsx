@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import api from '@/lib/api';
 
 interface CategoriaResumo {
   id: string;
@@ -25,12 +26,9 @@ interface DashboardData {
 }
 
 interface PainelCustoRealizadoProps {
-  token: string;
   safraId?: string;
   fazendaId?: string;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const CORES_DESPESA = ['#ef4444', '#f97316', '#3b82f6', '#a855f7', '#06b6d4', '#84cc16'];
 const CORES_RECEITA = ['#22c55e', '#16a34a', '#15803d', '#166534', '#14532d'];
@@ -123,7 +121,7 @@ function BarraCategoria({ cat, total, cor }: { cat: CategoriaResumo; total: numb
   );
 }
 
-export default function PainelCustoRealizado({ token, safraId, fazendaId }: PainelCustoRealizadoProps) {
+export default function PainelCustoRealizado({ safraId, fazendaId }: PainelCustoRealizadoProps) {
   const [dados, setDados] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
@@ -131,7 +129,6 @@ export default function PainelCustoRealizado({ token, safraId, fazendaId }: Pain
   const [periodo, setPeriodo] = useState({ inicio: '', fim: '' });
 
   useEffect(() => {
-    if (!token) return;
     setLoading(true);
     setErro('');
 
@@ -141,22 +138,16 @@ export default function PainelCustoRealizado({ token, safraId, fazendaId }: Pain
     if (safraId) params.set('safraId', safraId);
     if (fazendaId) params.set('fazendaId', fazendaId);
 
-    fetch(`${API_URL}/categorias-financeiras/resumo-dashboard?${params}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    api.get(`/categorias-financeiras/resumo-dashboard?${params}`)
       .then((r) => {
-        if (!r.ok) throw new Error('Erro ao carregar dashboard');
-        return r.json();
-      })
-      .then((data) => {
-        setDados(data);
+        setDados(r.data);
         setLoading(false);
       })
       .catch((e) => {
-        setErro(e.message);
+        setErro(e?.response?.data?.message || 'Erro ao carregar dashboard');
         setLoading(false);
       });
-  }, [token, periodo, safraId, fazendaId]);
+  }, [periodo, safraId, fazendaId]);
 
   if (loading) {
     return (
