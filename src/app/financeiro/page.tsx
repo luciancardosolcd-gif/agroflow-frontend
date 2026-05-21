@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
@@ -78,10 +78,13 @@ const fields = [
 // ─── Página principal ─────────────────────────────────────────────────────────
 export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
+  const [token, setToken] = useState('')
   const { data, loading, error, refetch } = useDashboardFinanceiro(periodo)
 
-  // Pegar token para o PainelCustoRealizado
-  const token = Cookies.get('accessToken') || ''
+  // Ler token no client (cookie só disponível no browser)
+  useEffect(() => {
+    setToken(Cookies.get('accessToken') || '')
+  }, [])
 
   const resumo = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
