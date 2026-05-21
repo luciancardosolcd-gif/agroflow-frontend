@@ -127,7 +127,7 @@ export default function PainelCustoRealizado({ token, safraId, fazendaId }: Pain
   const [dados, setDados] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState('');
-  const [aba, setAba] = useState<'despesas' | 'receitas'>('despesas');
+  const [aba, setAba] = useState<'despesa' | 'receita'>('despesa');
   const [periodo, setPeriodo] = useState({ inicio: '', fim: '' });
 
   useEffect(() => {
@@ -177,9 +177,9 @@ export default function PainelCustoRealizado({ token, safraId, fazendaId }: Pain
     );
   }
 
-  const lista = aba === 'despesas' ? (dados?.despesas ?? []) : (dados?.receitas ?? []);
-  const total = aba === 'despesas' ? (dados?.summary.totalDespesas ?? 0) : (dados?.summary.totalReceitas ?? 0);
-  const cores = aba === 'despesas' ? CORES_DESPESA : CORES_RECEITA;
+  const lista = aba === 'despesa' ? (dados?.despesas ?? []) : (dados?.receitas ?? []);
+  const total = aba === 'despesa' ? (dados?.summary.totalDespesas ?? 0) : (dados?.summary.totalReceitas ?? 0);
+  const cores = aba === 'despesa' ? CORES_DESPESA : CORES_RECEITA;
 
   return (
     <div className="bg-gray-800/60 rounded-xl border border-gray-700 overflow-hidden">
@@ -245,19 +245,19 @@ export default function PainelCustoRealizado({ token, safraId, fazendaId }: Pain
         <div className="flex-1 flex flex-col min-w-0">
           {/* Abas */}
           <div className="flex border-b border-gray-700">
-            {(['despesas', 'receitas'] as const).map((t) => (
+            {(['despesa', 'receita'] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => setAba(t)}
                 className={`flex-1 py-2.5 text-xs font-medium uppercase tracking-wide transition-colors border-b-2 -mb-px ${
                   aba === t
-                    ? t === 'despesas'
+                    ? t === 'despesa'
                       ? 'border-red-500 text-red-400'
                       : 'border-green-500 text-green-400'
                     : 'border-transparent text-gray-500 hover:text-gray-400'
                 }`}
               >
-                {t}
+                {t === 'despesa' ? 'Despesas' : 'Receitas'}
               </button>
             ))}
           </div>
@@ -292,4 +292,3 @@ export default function PainelCustoRealizado({ token, safraId, fazendaId }: Pain
     </div>
   );
 }
-
