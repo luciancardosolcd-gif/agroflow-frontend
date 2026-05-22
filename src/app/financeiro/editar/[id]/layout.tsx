@@ -1,16 +1,3 @@
-'use client'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Cookies from 'js-cookie'
-
-export default function NovoLancamentoLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
-
-  useEffect(() => {
-    const token = Cookies.get('accessToken')
-    if (!token) router.push('/login')
-  }, [router])
-
+export default function EditarLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
-
