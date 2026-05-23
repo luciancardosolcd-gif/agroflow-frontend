@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import Sidebar from '@/components/layout/Sidebar'
+import SafraSeletor from '@/components/SafraSeletor'
 import { Bell, Search } from 'lucide-react'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -21,9 +22,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-[#0d160d] border-b border-[#1a251a] flex items-center justify-between px-6 flex-shrink-0">
-          <div className="flex items-center gap-3 bg-[#1a251a] rounded-lg px-4 py-2 w-72">
-            <Search className="w-4 h-4 text-green-600" />
-            <input placeholder="Buscar..." className="bg-transparent text-sm text-green-300 placeholder-green-700 outline-none w-full" />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 bg-[#1a251a] rounded-lg px-4 py-2 w-56">
+              <Search className="w-4 h-4 text-green-600" />
+              <input placeholder="Buscar..." className="bg-transparent text-sm text-green-300 placeholder-green-700 outline-none w-full" />
+            </div>
+            <SafraSeletor />
           </div>
           <div className="flex items-center gap-4">
             <button className="relative w-9 h-9 bg-[#1a251a] rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 border border-[#243324]">
