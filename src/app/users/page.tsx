@@ -62,29 +62,29 @@ export default function UsersPage() {
   }
 
   const handleSave = async () => {
-    setSaving(true)
-    setError('')
-    try {
-      if (editing) {
-        const payload: Record<string, string> = {
-          nome: form.nome,
-          email: form.email,
-          perfil: form.perfil,
-          status: form.status,
-          dataExpiracao: form.dataExpiracao || '',
-        }
-        if (form.novaSenha) payload.senha = form.novaSenha
-        await api.put(`/users/${editing.id}`, payload)
-      } else {
-        await api.post('/users', { ...form, senha: form.senha })
+  setSaving(true)
+  setError('')
+  try {
+    if (editing) {
+      const payload: Record<string, string> = {
+        nome: form.nome,
+        email: form.email,
+        perfil: form.perfil,
+        status: form.status,
       }
-      setShowModal(false)
-      load()
-    } catch (e: unknown) {
-      const err = e as { response?: { data?: { message?: string } } }
-      setError(err.response?.data?.message || 'Erro ao salvar')
-    } finally { setSaving(false) }
-  }
+      if (form.dataExpiracao) payload.dataExpiracao = form.dataExpiracao
+      if (form.novaSenha) payload.novaSenha = form.novaSenha
+      await api.put(`/users/${editing.id}`, payload)
+    } else {
+      await api.post('/users', { ...form, senha: form.senha })
+    }
+    setShowModal(false)
+    load()
+  } catch (e: unknown) {
+    const err = e as { response?: { data?: { message?: string } } }
+    setError(err.response?.data?.message || 'Erro ao salvar')
+  } finally { setSaving(false) }
+}
 
   const handleDelete = async (id: string) => {
     if (!confirm('Confirmar exclusão do usuário?')) return
