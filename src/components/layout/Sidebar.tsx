@@ -5,7 +5,7 @@ import Cookies from 'js-cookie'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, DollarSign, FileText, Package,
-  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings, Shield, Tractor
+  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings, Shield, Tractor, MapPin, Sprout
 } from 'lucide-react'
 
 const navItems = [
@@ -17,7 +17,10 @@ const navItems = [
   { href: '/fornecedores', label: 'Fornecedores', icon: Truck, perfis: ['admin', 'gestor', 'operador'] },
   { href: '/maquinarios', label: 'Maquinários', icon: Cog, perfis: ['admin', 'gestor', 'operador'] },
   { href: '/documentos', label: 'Documentos', icon: Settings, perfis: ['admin', 'gestor', 'operador'] },
-  { href: '/produtor', label: 'Painel Produtor', icon: Tractor, perfis: ['admin', 'produtor'] },
+  { href: '/produtor', label: 'Painel Produtor', icon: Tractor, perfis: ['admin', 'produtor'], children: [
+    { href: '/produtor/propriedades', label: 'Propriedades', icon: MapPin },
+    { href: '/produtor/safras', label: 'Safras', icon: Sprout },
+  ]},
   { href: '/users', label: 'Usuários', icon: Users, perfis: ['admin'] },
   { href: '/admin', label: 'Admin Panel', icon: Shield, perfis: ['admin'] },
 ]
@@ -68,19 +71,40 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {itemsFiltrados.map(({ href, label, icon: Icon }) => {
+        {itemsFiltrados.map(({ href, label, icon: Icon, children }) => {
           const active = pathname === href
+          const childActive = children?.some(c => pathname.startsWith(c.href))
           return (
-            <Link key={href} href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group ${
-                active
-                  ? 'bg-green-800/40 text-green-300 border border-green-800/50'
-                  : 'text-green-600 hover:bg-[#1a251a] hover:text-green-300'
-              }`}>
-              <Icon className={`w-4 h-4 flex-shrink-0 ${active ? 'text-green-400' : 'text-green-700 group-hover:text-green-400'}`} />
-              {label}
-              {active && <ChevronRight className="w-3 h-3 ml-auto text-green-500" />}
-            </Link>
+            <div key={href}>
+              <Link href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group ${
+                  active || childActive
+                    ? 'bg-green-800/40 text-green-300 border border-green-800/50'
+                    : 'text-green-600 hover:bg-[#1a251a] hover:text-green-300'
+                }`}>
+                <Icon className={`w-4 h-4 flex-shrink-0 ${active || childActive ? 'text-green-400' : 'text-green-700 group-hover:text-green-400'}`} />
+                {label}
+                {(active || childActive) && <ChevronRight className="w-3 h-3 ml-auto text-green-500" />}
+              </Link>
+              {children && (active || childActive) && (
+                <div className="ml-6 mt-1 space-y-1">
+                  {children.map(child => {
+                    const childIsActive = pathname === child.href
+                    return (
+                      <Link key={child.href} href={child.href}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                          childIsActive
+                            ? 'bg-green-800/30 text-green-300'
+                            : 'text-green-700 hover:bg-[#1a251a] hover:text-green-400'
+                        }`}>
+                        <child.icon className="w-3.5 h-3.5" />
+                        {child.label}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )
         })}
       </nav>
