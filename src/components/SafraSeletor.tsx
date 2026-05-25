@@ -76,3 +76,14 @@ export default function SafraSeletor() {
             onChange={e => handleSafra(e.target.value)}
             className="bg-transparent text-xs text-green-300 outline-none cursor-pointer pr-1"
           >
+            <option value="">Todas safras</option>
+            {safrasFiltradas.map(s => (
+              <option key={s.id} value={s.id}>{s.nome}</option>
+            ))}
+          </select>
+          <ChevronDown className="w-3 h-3 text-green-600" />
+        </div>
+      </div>
+    </div>
+  )
+}
