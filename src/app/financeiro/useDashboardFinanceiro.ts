@@ -45,7 +45,11 @@ export interface DashboardData {
   lancamentosRecentes: LancamentoRecente[]
 }
 
-export function useDashboardFinanceiro(periodo: PeriodoFiltro = 'MES_ATUAL') {
+export function useDashboardFinanceiro(
+  periodo: PeriodoFiltro = 'MES_ATUAL',
+  fazendaId?: string,
+  safraId?: string,
+) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -54,14 +58,17 @@ export function useDashboardFinanceiro(periodo: PeriodoFiltro = 'MES_ATUAL') {
     try {
       setLoading(true)
       setError(null)
-      const response = await api.get(`/fin-dashboard?periodo=${periodo}`)
+      let url = `/fin-dashboard?periodo=${periodo}`
+      if (fazendaId) url += `&fazendaId=${fazendaId}`
+      if (safraId) url += `&safraId=${safraId}`
+      const response = await api.get(url)
       setData(response.data)
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Erro ao carregar dashboard')
     } finally {
       setLoading(false)
     }
-  }, [periodo])
+  }, [periodo, fazendaId, safraId])
 
   useEffect(() => {
     fetchDashboard()
