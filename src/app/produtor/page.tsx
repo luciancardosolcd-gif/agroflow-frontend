@@ -4,7 +4,6 @@ import { useSafraContext } from '@/lib/SafraContext'
 import { Tractor, Leaf, BarChart3, FileText, Package, DollarSign, TrendingUp, TrendingDown } from 'lucide-react'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
 import { useDashboardFinanceiro, PeriodoFiltro } from '../financeiro/useDashboardFinanceiro'
-import { useSafraContext } from '@/lib/SafraContext'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -47,8 +46,7 @@ function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; de
 export default function PainelProdutorPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const { propriedadeId, safraId } = useSafraContext()
-const { propriedadeId, safraId } = useSafraContext()
-const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
+  const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
   const resumo = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
 
@@ -62,7 +60,6 @@ const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl text-green-100 flex items-center gap-3">
@@ -84,7 +81,6 @@ const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId
         </div>
       </div>
 
-      {/* KPIs financeiros */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-2xl p-5 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-3">
           <div className="flex items-center justify-between">
@@ -116,7 +112,6 @@ const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId
         </div>
       </div>
 
-      {/* Evolução Mensal + Custo Realizado */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
           <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
@@ -135,10 +130,9 @@ const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId
           )}
         </div>
 
-        <PainelCustoRealizado />
+        <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
       </div>
 
-      {/* Módulos em breve */}
       <div>
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Módulos Agrícolas</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
