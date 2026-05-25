@@ -43,7 +43,8 @@ const fields = [
 
 export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
-  const { data, loading, error, refetch } = useDashboardFinanceiro(periodo)
+  const { propriedadeId, safraId } = useSafraContext()
+const { data, loading, error, refetch } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
   const resumo = data?.resumo
 
   return (
