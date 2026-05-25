@@ -4,6 +4,7 @@ import { useSafraContext } from '@/lib/SafraContext'
 import { Tractor, Leaf, BarChart3, FileText, Package, DollarSign, TrendingUp, TrendingDown } from 'lucide-react'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
 import { useDashboardFinanceiro, PeriodoFiltro } from '../financeiro/useDashboardFinanceiro'
+import { useSafraContext } from '@/lib/SafraContext'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -46,6 +47,7 @@ function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; de
 export default function PainelProdutorPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const { propriedadeId, safraId } = useSafraContext()
+const { propriedadeId, safraId } = useSafraContext()
 const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
   const resumo = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
