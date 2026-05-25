@@ -1,5 +1,5 @@
-import { useSafraContext } from '@/lib/SafraContext'
 'use client'
+import { useSafraContext } from '@/lib/SafraContext'
 import { useState } from 'react'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
