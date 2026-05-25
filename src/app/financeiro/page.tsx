@@ -1,3 +1,4 @@
+import { useSafraContext } from '@/lib/SafraContext'
 'use client'
 import { useState } from 'react'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
