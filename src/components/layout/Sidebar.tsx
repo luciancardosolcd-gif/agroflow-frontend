@@ -13,13 +13,13 @@ const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante', 'produtor'], modulo: null },
   { href: '/clientes', label: 'Clientes', icon: UserCheck, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'clientes' },
-  { href: '/financeiro', label: 'Financeiro', icon: DollarSign, perfis: ['admin', 'gestor', 'operador'], modulo: 'financeiro' },
-  { href: '/contratos', label: 'Contratos', icon: FileText, perfis: ['admin', 'gestor', 'operador'], modulo: 'contratos' },
-  { href: '/estoque', label: 'Estoque', icon: Package, perfis: ['admin', 'gestor', 'operador', 'visitante'], modulo: 'estoque' },
-  { href: '/fornecedores', label: 'Fornecedores', icon: Truck, perfis: ['admin', 'gestor', 'operador'], modulo: 'fornecedores' },
-  { href: '/maquinarios', label: 'Maquinários', icon: Cog, perfis: ['admin', 'gestor', 'operador'], modulo: 'maquinarios' },
-  { href: '/documentos', label: 'Documentos', icon: Settings, perfis: ['admin', 'gestor', 'operador'], modulo: 'documentos' },
-  { href: '/produtor', label: 'Painel Produtor', icon: Tractor, perfis: ['admin', 'produtor'], modulo: 'produtor', children: [
+  { href: '/financeiro', label: 'Financeiro', icon: DollarSign, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'financeiro' },
+  { href: '/contratos', label: 'Contratos', icon: FileText, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'contratos' },
+  { href: '/estoque', label: 'Estoque', icon: Package, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'estoque' },
+  { href: '/fornecedores', label: 'Fornecedores', icon: Truck, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'fornecedores' },
+  { href: '/maquinarios', label: 'Maquinários', icon: Cog, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'maquinarios' },
+  { href: '/documentos', label: 'Documentos', icon: Settings, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'documentos' },
+  { href: '/produtor', label: 'Painel Produtor', icon: Tractor, perfis: ['admin', 'produtor', 'agronomo', 'visitante'], modulo: 'produtor', children: [
     { href: '/produtor/propriedades', label: 'Propriedades', icon: MapPin },
     { href: '/produtor/safras', label: 'Safras', icon: Sprout },
   ]},
@@ -63,6 +63,22 @@ export default function Sidebar() {
       setPerfil(parsed.perfil)
       setEmail(parsed.email)
       setPermissoes(parsed.permissoes || {})
+
+      // Busca permissões atualizadas do banco
+      const token = Cookies.get('accessToken')
+      if (parsed.id && token) {
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${parsed.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.permissoes) {
+              setPermissoes(data.permissoes)
+              Cookies.set('user', JSON.stringify({ ...parsed, permissoes: data.permissoes }))
+            }
+          })
+          .catch(() => {})
+      }
     }
   }, [])
 
@@ -77,9 +93,8 @@ export default function Sidebar() {
   const itemsFiltrados = navItems.filter(item => {
     if (!item.perfis.includes(perfil)) return false
     if ((item as any).superAdminOnly && !isSuperAdmin) return false
-    // Se tem permissoes definidas e tem modulo associado, verifica se pode ver
     if (item.modulo && Object.keys(permissoes).length > 0) {
-      return permissoes[item.modulo]?.ver !== false
+      return permissoes[item.modulo]?.ver === true
     }
     return true
   })
