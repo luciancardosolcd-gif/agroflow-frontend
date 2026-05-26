@@ -23,6 +23,7 @@ const navItems = [
   ]},
   { href: '/users', label: 'Usuários', icon: Users, perfis: ['admin'] },
   { href: '/admin', label: 'Admin Panel', icon: Shield, perfis: ['admin'] },
+{ href: '/admin/logs', label: 'Log de Acessos', icon: Shield, perfis: ['admin'] },
 ]
 
 const Logo = () => (
