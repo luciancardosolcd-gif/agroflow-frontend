@@ -8,6 +8,8 @@ import {
   UserCheck, Truck, ChevronRight, Cog, LogOut, Settings, Shield, Tractor, MapPin, Sprout
 } from 'lucide-react'
 
+const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
+
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante', 'produtor'] },
   { href: '/clientes', label: 'Clientes', icon: UserCheck, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'] },
@@ -22,8 +24,8 @@ const navItems = [
     { href: '/produtor/safras', label: 'Safras', icon: Sprout },
   ]},
   { href: '/users', label: 'Usuários', icon: Users, perfis: ['admin'] },
-  { href: '/admin', label: 'Admin Panel', icon: Shield, perfis: ['admin'] },
-{ href: '/admin/logs', label: 'Log de Acessos', icon: Shield, perfis: ['admin'] },
+  { href: '/admin', label: 'Admin Panel', icon: Shield, perfis: ['admin'], superAdminOnly: true },
+  { href: '/admin/logs', label: 'Log de Acessos', icon: Shield, perfis: ['admin'], superAdminOnly: true },
 ]
 
 const Logo = () => (
@@ -51,10 +53,15 @@ export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [perfil, setPerfil] = useState('')
+  const [email, setEmail] = useState('')
 
   useEffect(() => {
     const u = Cookies.get('user')
-    if (u) setPerfil(JSON.parse(u).perfil)
+    if (u) {
+      const parsed = JSON.parse(u)
+      setPerfil(parsed.perfil)
+      setEmail(parsed.email)
+    }
   }, [])
 
   const handleLogout = () => {
@@ -63,7 +70,13 @@ export default function Sidebar() {
     router.push('/login')
   }
 
-  const itemsFiltrados = navItems.filter(item => item.perfis.includes(perfil))
+  const isSuperAdmin = SUPER_ADMINS.includes(email)
+
+  const itemsFiltrados = navItems.filter(item => {
+    if (!item.perfis.includes(perfil)) return false
+    if ((item as any).superAdminOnly && !isSuperAdmin) return false
+    return true
+  })
 
   return (
     <aside className="w-64 min-h-screen bg-[#0d160d] border-r border-[#1a251a] flex flex-col">
