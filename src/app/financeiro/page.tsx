@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
+import SemPermissao from '@/components/ui/SemPermissao'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
 
 const formatCurrency = (value: number) =>
@@ -56,22 +57,14 @@ export default function FinanceiroPage() {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      if (parsed.perfil === 'admin') {
-        setAutorizado(true)
-        return
-      }
+      if (parsed.perfil === 'admin') { setAutorizado(true); return }
       const perm = parsed.permissoes || {}
-      if (perm?.financeiro?.ver === true) {
-        setAutorizado(true)
-      } else {
-        setAutorizado(false)
-        router.replace('/dashboard')
-      }
+      if (perm?.financeiro?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
     }
   }, [])
 
   if (autorizado === null) return null
-  if (!autorizado) return null
+  if (!autorizado) return <SemPermissao />
 
   return (
     <div className="space-y-8">
@@ -86,62 +79,25 @@ export default function FinanceiroPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
-            className="bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
-          >
+          <select value={periodo} onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
+            className="bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50">
             {PERIODOS.map((p) => (
               <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
             ))}
           </select>
-          <button
-            onClick={refetch}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={refetch} className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">{error}</div>
-      )}
-
+      {error && <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">{error}</div>}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          title="Receitas"
-          value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
-          icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
-          color="border-emerald-500/20 bg-emerald-500/5"
-        />
-        <KpiCard
-          title="Despesas"
-          value={loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}
-          icon={<TrendingDown className="w-5 h-5 text-red-400" />}
-          color="border-red-500/20 bg-red-500/5"
-        />
-        <KpiCard
-          title="Saldo"
-          value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}
-          icon={<Wallet className="w-5 h-5 text-blue-400" />}
-          color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`}
-        />
-        <KpiCard
-          title="Margem"
-          value={loading ? '...' : `${resumo?.margemLucro ?? 0}%`}
-          icon={<BarChart2 className="w-5 h-5 text-purple-400" />}
-          color="border-purple-500/20 bg-purple-500/5"
-          sub="Margem de lucro"
-        />
+        <KpiCard title="Receitas" value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)} icon={<TrendingUp className="w-5 h-5 text-emerald-400" />} color="border-emerald-500/20 bg-emerald-500/5" />
+        <KpiCard title="Despesas" value={loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)} icon={<TrendingDown className="w-5 h-5 text-red-400" />} color="border-red-500/20 bg-red-500/5" />
+        <KpiCard title="Saldo" value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)} icon={<Wallet className="w-5 h-5 text-blue-400" />} color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`} />
+        <KpiCard title="Margem" value={loading ? '...' : `${resumo?.margemLucro ?? 0}%`} icon={<BarChart2 className="w-5 h-5 text-purple-400" />} color="border-purple-500/20 bg-purple-500/5" sub="Margem de lucro" />
       </div>
-
-      <CrudPage
-        title="Lançamentos"
-        endpoint="/financeiro"
-        fields={fields}
-        icon={<DollarSign className="w-8 h-8 text-green-400" />}
-      />
+      <CrudPage title="Lançamentos" endpoint="/financeiro" fields={fields} icon={<DollarSign className="w-8 h-8 text-green-400" />} />
     </div>
   )
 }
