@@ -1,5 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 import { useSafraContext } from '@/lib/SafraContext'
 import { Tractor, Leaf, BarChart3, FileText, Package, DollarSign, TrendingUp, TrendingDown } from 'lucide-react'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
@@ -45,10 +47,29 @@ function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; de
 
 export default function PainelProdutorPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
+  const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const { propriedadeId, safraId } = useSafraContext()
   const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
   const resumo = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
+  const router = useRouter()
+
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) {
+      const parsed = JSON.parse(u)
+      if (parsed.perfil === 'admin') { setAutorizado(true); return }
+      const perm = parsed.permissoes || {}
+      if (perm?.produtor?.ver === true) {
+        setAutorizado(true)
+      } else {
+        setAutorizado(false)
+        router.replace('/dashboard')
+      }
+    }
+  }, [])
+
+  if (autorizado === null || !autorizado) return null
 
   const modulos = [
     { icon: Tractor, label: 'Maquinários', desc: 'Gestão de equipamentos', color: 'text-yellow-400', bg: 'bg-yellow-900/20 border-yellow-800/40' },
@@ -129,7 +150,6 @@ export default function PainelProdutorPage() {
             <GraficoEvolucao dados={evolucao} />
           )}
         </div>
-
         <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
       </div>
 
