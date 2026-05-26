@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import Cookies from 'js-cookie'
 import { Plus, Trash2, Edit, Search, RefreshCw, X, Package, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react'
@@ -28,10 +29,23 @@ export default function EstoquePage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [perfil, setPerfil] = useState('')
+  const [autorizado, setAutorizado] = useState<boolean | null>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const u = Cookies.get('user')
-    if (u) setPerfil(JSON.parse(u).perfil)
+    if (u) {
+      const parsed = JSON.parse(u)
+      setPerfil(parsed.perfil)
+      if (parsed.perfil === 'admin') { setAutorizado(true); return }
+      const perm = parsed.permissoes || {}
+      if (perm?.estoque?.ver === true) {
+        setAutorizado(true)
+      } else {
+        setAutorizado(false)
+        router.replace('/dashboard')
+      }
+    }
   }, [])
 
   const canEdit = ['admin', 'gestor'].includes(perfil)
@@ -46,7 +60,7 @@ export default function EstoquePage() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { if (autorizado) load() }, [autorizado])
 
   const openCreate = () => {
     setEditing(null)
@@ -55,7 +69,7 @@ export default function EstoquePage() {
     setShowModal(true)
   }
 
- const openEdit = (item: Record<string, string>) => {
+  const openEdit = (item: Record<string, string>) => {
     setEditing(item)
     setForm({
       nome: item.nome, descricao: item.descricao || '',
@@ -113,6 +127,8 @@ export default function EstoquePage() {
   const criticos = items.filter(i => getVencimentoStatus(i.vencimento).icon === 'critico').length
   const atencao = items.filter(i => getVencimentoStatus(i.vencimento).icon === 'atencao').length
 
+  if (autorizado === null || !autorizado) return null
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -129,7 +145,6 @@ export default function EstoquePage() {
         </div>
       </div>
 
-      {/* Alertas de vencimento */}
       {(vencidos > 0 || criticos > 0 || atencao > 0) && (
         <div className="grid grid-cols-3 gap-4">
           {vencidos > 0 && (
