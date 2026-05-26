@@ -106,16 +106,20 @@ export default function UsersPage() {
     setError('')
     try {
       if (editing) {
+        // 1. Salva dados do usuário
         const payload: Record<string, any> = {
           nome: form.nome,
           email: form.email,
           perfil: form.perfil,
           status: form.status,
-          permissoes,
         }
         if (form.dataExpiracao) payload.dataExpiracao = form.dataExpiracao
         if (form.novaSenha) payload.novaSenha = form.novaSenha
         await api.put(`/users/${editing.id}`, payload)
+
+        // 2. Salva permissões separadamente
+        await api.put(`/users/${editing.id}/permissions`, { permissoes })
+
       } else {
         await api.post('/users', { ...form, senha: form.senha, permissoes })
       }
