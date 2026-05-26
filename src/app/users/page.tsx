@@ -106,20 +106,16 @@ export default function UsersPage() {
     setError('')
     try {
       if (editing) {
-        // 1. Salva dados do usuário
         const payload: Record<string, any> = {
           nome: form.nome,
           email: form.email,
           perfil: form.perfil,
           status: form.status,
+          permissoes,
         }
         if (form.dataExpiracao) payload.dataExpiracao = form.dataExpiracao
         if (form.novaSenha) payload.novaSenha = form.novaSenha
         await api.put(`/users/${editing.id}`, payload)
-
-        // 2. Salva permissões separadamente
-        await api.put(`/users/${editing.id}/permissions`, { permissoes })
-
       } else {
         await api.post('/users', { ...form, senha: form.senha, permissoes })
       }
@@ -155,7 +151,6 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-green-100 flex items-center gap-3">
@@ -174,7 +169,6 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Contadores */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
         {perfis.map(p => (
           <button key={p} onClick={() => setFiltroPerfil(filtroPerfil === p ? '' : p)}
@@ -185,7 +179,6 @@ export default function UsersPage() {
         ))}
       </div>
 
-      {/* Filtros */}
       <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-4">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-2 bg-[#1a251a] rounded-lg px-3 py-2 flex-1 min-w-48 border border-[#243324]">
@@ -208,7 +201,6 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Tabela */}
       <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-16">
@@ -240,9 +232,7 @@ export default function UsersPage() {
                   const modulosAtivos = modulos.filter(m => perm[m.key]?.ver).length
                   return (
                     <tr key={item.id} className="border-b border-[#1a251a] hover:bg-[#1a251a]/50 transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="text-green-200 font-medium">{item.nome}</div>
-                      </td>
+                      <td className="py-3 px-4"><div className="text-green-200 font-medium">{item.nome}</div></td>
                       <td className="py-3 px-4 text-green-400 text-xs">{item.email}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${perfilColor[item.perfil] || 'bg-gray-900/40 text-gray-400 border-gray-800'}`}>
@@ -292,7 +282,6 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-[#111811] border border-[#243324] rounded-2xl w-full max-w-2xl shadow-2xl">
@@ -303,7 +292,6 @@ export default function UsersPage() {
               </button>
             </div>
 
-            {/* Abas */}
             <div className="flex border-b border-[#243324]">
               <button onClick={() => setAbaModal('dados')}
                 className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${abaModal === 'dados' ? 'border-green-500 text-green-400' : 'border-transparent text-green-700 hover:text-green-400'}`}>
