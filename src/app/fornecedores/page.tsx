@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import CrudPage from '@/components/ui/CrudPage'
+import SemPermissao from '@/components/ui/SemPermissao'
 import { Truck } from 'lucide-react'
 
 const fields = [
@@ -16,7 +16,6 @@ const fields = [
 
 export default function FornecedoresPage() {
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
-  const router = useRouter()
 
   useEffect(() => {
     const u = Cookies.get('user')
@@ -24,16 +23,12 @@ export default function FornecedoresPage() {
       const parsed = JSON.parse(u)
       if (parsed.perfil === 'admin') { setAutorizado(true); return }
       const perm = parsed.permissoes || {}
-      if (perm?.fornecedores?.ver === true) {
-        setAutorizado(true)
-      } else {
-        setAutorizado(false)
-        router.replace('/dashboard')
-      }
+      if (perm?.fornecedores?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
     }
   }, [])
 
-  if (autorizado === null || !autorizado) return null
+  if (autorizado === null) return null
+  if (!autorizado) return <SemPermissao />
 
   return <CrudPage title="Fornecedores" endpoint="/fornecedores" fields={fields} icon={<Truck className="w-8 h-8 text-purple-400" />} />
 }
