@@ -1,6 +1,8 @@
 'use client'
 import { useSafraContext } from '@/lib/SafraContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Cookies from 'js-cookie'
 import { DollarSign, TrendingUp, TrendingDown, Wallet, BarChart2, RefreshCw } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
@@ -44,13 +46,35 @@ const fields = [
 
 export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
+  const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const { propriedadeId, safraId } = useSafraContext()
-const { data, loading, error, refetch } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
+  const { data, loading, error, refetch } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
   const resumo = data?.resumo
+  const router = useRouter()
+
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) {
+      const parsed = JSON.parse(u)
+      if (parsed.perfil === 'admin') {
+        setAutorizado(true)
+        return
+      }
+      const perm = parsed.permissoes || {}
+      if (perm?.financeiro?.ver === true) {
+        setAutorizado(true)
+      } else {
+        setAutorizado(false)
+        router.replace('/dashboard')
+      }
+    }
+  }, [])
+
+  if (autorizado === null) return null
+  if (!autorizado) return null
 
   return (
     <div className="space-y-8">
-      {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-xl bg-green-500/10">
@@ -84,7 +108,6 @@ const { data, loading, error, refetch } = useDashboardFinanceiro(periodo, propri
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">{error}</div>
       )}
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Receitas"
@@ -113,7 +136,6 @@ const { data, loading, error, refetch } = useDashboardFinanceiro(periodo, propri
         />
       </div>
 
-      {/* Lista de lançamentos */}
       <CrudPage
         title="Lançamentos"
         endpoint="/financeiro"
