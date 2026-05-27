@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, MapPin, Ruler } from 'lucide-react'
 import api from '@/lib/api'
+import Cookies from 'js-cookie'
+
+const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
 
 interface Propriedade {
   id: string
@@ -23,6 +26,16 @@ export default function PropriedadesPage() {
     nome: '', descricao: '', areaTotal: '', cidade: '', estado: '', endereco: ''
   })
   const [saving, setSaving] = useState(false)
+  const [email, setEmail] = useState('')
+
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) setEmail(JSON.parse(u).email || '')
+  }, [])
+
+  const isSuperAdmin = SUPER_ADMINS.includes(email)
+  const canCreate = isSuperAdmin
+  const canDelete = isSuperAdmin
 
   const load = async () => {
     setLoading(true)
@@ -88,9 +101,11 @@ export default function PropriedadesPage() {
           </h1>
           <p className="text-green-600 text-sm mt-1">Gerencie suas fazendas e propriedades rurais</p>
         </div>
-        <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
-          <Plus className="w-4 h-4" /> Nova Propriedade
-        </button>
+        {canCreate && (
+          <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
+            <Plus className="w-4 h-4" /> Nova Propriedade
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -145,7 +160,7 @@ export default function PropriedadesPage() {
         <div className="text-center py-12 text-green-700">
           <MapPin className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p>Nenhuma propriedade cadastrada</p>
-          <p className="text-sm mt-1">Clique em "Nova Propriedade" para começar</p>
+          {canCreate && <p className="text-sm mt-1">Clique em "Nova Propriedade" para começar</p>}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -160,9 +175,11 @@ export default function PropriedadesPage() {
                   <button onClick={() => openEdit(p)} className="p-1.5 text-green-600 hover:text-green-400">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(p.id)} className="p-1.5 text-red-600 hover:text-red-400">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canDelete && (
+                    <button onClick={() => handleDelete(p.id)} className="p-1.5 text-red-600 hover:text-red-400">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
               {p.areaTotal && (
