@@ -85,13 +85,18 @@ export default function UsersPage() {
     setError('')
     setShowModal(true)
   }
-
-  const togglePermissao = (modulo: string, acao: string) => {
-    setPermissoes(prev => ({
-      ...prev,
-      [modulo]: { ...prev[modulo], [acao]: !prev[modulo][acao] }
-    }))
-  }
+const toggleModulo = (modulo: string) => {
+  const acoesModulo = modulo === 'produtor'
+    ? acoes.filter(a => a !== 'deletar')
+    : modulo === 'relatorios'
+    ? acoes.filter(a => a === 'ver')
+    : acoes
+  const tudoAtivo = acoesModulo.every(a => permissoes[modulo][a])
+  setPermissoes(prev => ({
+    ...prev,
+    [modulo]: acoesModulo.reduce((acc, a) => ({ ...acc, [a]: !tudoAtivo }), {} as Record<string, boolean>)
+  }))
+}
 
   const toggleModulo = (modulo: string) => {
     const acoesModulo = modulo === 'produtor' ? acoes.filter(a => a !== 'deletar') : acoes
