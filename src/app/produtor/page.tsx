@@ -1,20 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
-import { useSafraContext } from '@/lib/SafraContext'
-import { Tractor, Leaf, BarChart3, FileText, Package, DollarSign, TrendingUp, TrendingDown, CloudRain, Thermometer, Wind, Droplets, Activity, AlertTriangle, RefreshCw } from 'lucide-react'
+import { Tractor, Leaf, BarChart3, FileText, Package, TrendingUp, TrendingDown, CloudRain, Thermometer, Wind, Droplets, Activity, AlertTriangle, RefreshCw } from 'lucide-react'
 import SemPermissao from '@/components/ui/SemPermissao'
-import { useDashboardFinanceiro, PeriodoFiltro } from '../financeiro/useDashboardFinanceiro'
-
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-
-const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
-  { value: 'MES_ATUAL', label: 'Mês Atual' },
-  { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
-  { value: 'TRIMESTRE', label: 'Trimestre' },
-  { value: 'ANO_ATUAL', label: 'Ano Atual' },
-]
 
 const COMMODITIES = [
   { key: 'soja', label: 'Soja', unidade: 'R$/sc 60kg', cor: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5' },
@@ -44,39 +32,12 @@ const gerarClima = () => ({
   condicao: ['Ensolarado', 'Parcialmente nublado', 'Nublado', 'Chuva leve'][Math.floor(Math.random() * 4)],
 })
 
-function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; despesas: number }[] }) {
-  const max = Math.max(...dados.flatMap((d) => [d.receitas, d.despesas]), 1)
-  return (
-    <div className="flex items-end gap-3 h-32 mt-2">
-      {dados.map((d) => (
-        <div key={d.mes} className="flex-1 flex flex-col items-center gap-1">
-          <div className="flex items-end gap-0.5 w-full h-24">
-            <div title={`Receitas: ${formatCurrency(d.receitas)}`}
-              className="flex-1 bg-emerald-500/70 rounded-t transition-all duration-700"
-              style={{ height: `${(d.receitas / max) * 100}%` }} />
-            <div title={`Despesas: ${formatCurrency(d.despesas)}`}
-              className="flex-1 bg-red-500/70 rounded-t transition-all duration-700"
-              style={{ height: `${(d.despesas / max) * 100}%` }} />
-          </div>
-          <span className="text-[10px] text-gray-500">{d.mes.slice(5)}</span>
-        </div>
-      ))}
-      {dados.length === 0 && <p className="text-gray-500 text-sm w-full text-center">Sem dados no período</p>}
-    </div>
-  )
-}
-
 export default function PainelProdutorPage() {
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const [cotacoes, setCotacoes] = useState<Record<string, { preco: number; variacao: number }>>(gerarCotacoes())
   const [clima, setClima] = useState(gerarClima())
   const [loadingCotacoes, setLoadingCotacoes] = useState(false)
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState(new Date())
-  const { propriedadeId, safraId } = useSafraContext()
-  const { data, loading } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
-  const resumo = data?.resumo
-  const evolucao = data?.evolucaoMensal ?? []
 
   useEffect(() => {
     const u = Cookies.get('user')
@@ -121,14 +82,6 @@ export default function PainelProdutorPage() {
           </h1>
           <p className="text-green-600 mt-1">Visão consolidada da produção agrícola</p>
         </div>
-        <div className="flex items-center gap-2">
-          <select value={periodo} onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
-            className="bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50">
-            {PERIODOS.map((p) => (
-              <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* CotaçãoFlow */}
@@ -172,8 +125,6 @@ export default function PainelProdutorPage() {
 
       {/* Registros Climáticos + Monitoramento */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Registros Climáticos */}
         <div className="rounded-2xl border border-blue-500/20 bg-blue-500/3 p-5">
           <div className="flex items-center gap-2 mb-4">
             <CloudRain className="w-5 h-5 text-blue-400" />
@@ -216,7 +167,6 @@ export default function PainelProdutorPage() {
           <p className="text-xs text-gray-600 mt-2 text-center">🔒 Integração com estação meteorológica em breve</p>
         </div>
 
-        {/* Monitoramento */}
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/3 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-emerald-400" />
@@ -254,56 +204,6 @@ export default function PainelProdutorPage() {
           </div>
           <p className="text-xs text-gray-600 mt-3 text-center">🔒 Módulo completo em desenvolvimento</p>
         </div>
-      </div>
-
-      {/* KPIs financeiros */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl p-5 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Receitas</span>
-            <div className="p-2 rounded-xl bg-white/5"><TrendingUp className="w-5 h-5 text-emerald-400" /></div>
-          </div>
-          <p className="text-2xl font-bold text-white">{loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}</p>
-        </div>
-        <div className="rounded-2xl p-5 border border-red-500/20 bg-red-500/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Despesas</span>
-            <div className="p-2 rounded-xl bg-white/5"><TrendingDown className="w-5 h-5 text-red-400" /></div>
-          </div>
-          <p className="text-2xl font-bold text-white">{loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}</p>
-        </div>
-        <div className="rounded-2xl p-5 border border-blue-500/20 bg-blue-500/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Saldo</span>
-            <div className="p-2 rounded-xl bg-white/5"><DollarSign className="w-5 h-5 text-blue-400" /></div>
-          </div>
-          <p className="text-2xl font-bold text-white">{loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}</p>
-        </div>
-        <div className="rounded-2xl p-5 border border-purple-500/20 bg-purple-500/5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Margem</span>
-            <div className="p-2 rounded-xl bg-white/5"><BarChart3 className="w-5 h-5 text-purple-400" /></div>
-          </div>
-          <p className="text-2xl font-bold text-white">{loading ? '...' : `${resumo?.margemLucro ?? 0}%`}</p>
-        </div>
-      </div>
-
-      {/* Gráfico evolução */}
-      <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
-        <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
-        <div className="flex gap-4 mb-3">
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> Receitas
-          </span>
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Despesas
-          </span>
-        </div>
-        {loading ? (
-          <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
-        ) : (
-          <GraficoEvolucao dados={evolucao} />
-        )}
       </div>
 
       {/* Módulos */}
