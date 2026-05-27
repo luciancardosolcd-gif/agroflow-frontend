@@ -5,7 +5,7 @@ import api from '@/lib/api'
 import Cookies from 'js-cookie'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
 import { useSafraContext } from '@/lib/SafraContext'
-import { useDashboardFinanceiro, PeriodoFiltro } from '../financeiro/useDashboardFinanceiro'
+import { useDashboardFinanceiro, PeriodoFiltro } from '../../financeiro/useDashboardFinanceiro'
 
 const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
 
