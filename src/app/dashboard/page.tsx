@@ -80,17 +80,6 @@ export default function DashboardPage() {
 
   const maxEvolucao = Math.max(...evolucao.flatMap(d => [d.receitas, d.despesas]), 1)
 
-  const modules = [
-    { label: 'Clientes', icon: UserCheck, href: '/clientes', color: 'text-blue-400', bg: 'bg-blue-900/20 border-blue-800/40', modulo: 'clientes' },
-    { label: 'Financeiro', icon: DollarSign, href: '/financeiro', color: 'text-green-400', bg: 'bg-green-900/20 border-green-800/40', modulo: 'financeiro' },
-    { label: 'Contratos', icon: FileText, href: '/contratos', color: 'text-yellow-400', bg: 'bg-yellow-900/20 border-yellow-800/40', modulo: 'contratos' },
-    { label: 'Estoque', icon: Package, href: '/estoque', color: 'text-orange-400', bg: 'bg-orange-900/20 border-orange-800/40', modulo: 'estoque' },
-    { label: 'Fornecedores', icon: Truck, href: '/fornecedores', color: 'text-purple-400', bg: 'bg-purple-900/20 border-purple-800/40', modulo: 'fornecedores' },
-    { label: 'Maquinários', icon: Cog, href: '/maquinarios', color: 'text-red-400', bg: 'bg-red-900/20 border-red-800/40', modulo: 'maquinarios' },
-    { label: 'Documentos', icon: FileText, href: '/documentos', color: 'text-cyan-400', bg: 'bg-cyan-900/20 border-cyan-800/40', modulo: 'documentos' },
-    { label: 'Usuários', icon: Users, href: '/users', color: 'text-pink-400', bg: 'bg-pink-900/20 border-pink-800/40', modulo: null },
-  ].filter(m => m.modulo === null ? perfil === 'admin' : temPermissao(m.modulo))
-
   return (
     <div className="space-y-6">
       {/* Saudação */}
@@ -107,7 +96,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPIs financeiros — só aparece se tiver permissão */}
+      {/* KPIs financeiros */}
       {temPermissao('financeiro') && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-2xl p-5 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-3">
@@ -145,7 +134,6 @@ export default function DashboardPage() {
 
       {/* Stats + Evolução */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           {[
             { label: 'Usuários', value: stats.users, icon: Users, color: 'text-pink-400', modulo: null },
@@ -165,7 +153,6 @@ export default function DashboardPage() {
           ))}
         </div>
 
-        {/* Evolução mensal — só aparece se tiver permissão financeiro */}
         {temPermissao('financeiro') && (
           <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/3 p-5">
             <div className="flex items-center justify-between mb-4">
@@ -207,7 +194,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* Últimos lançamentos — só aparece se tiver permissão financeiro */}
+      {/* Últimos lançamentos */}
       {temPermissao('financeiro') && recentes.length > 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
           <div className="flex items-center justify-between mb-4">
@@ -232,16 +219,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-     {/* Módulos */}
-<div>
-  <h2 className="font-display text-xl text-green-200 mb-4 flex items-center gap-2">
-    <TrendingUp className="w-5 h-5 text-green-500" />
-    Módulos do sistema
-  </h2>
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-    {modules.map((mod) => (
-      ...
-    ))}
-  </div>
-</div>
+    </div>
+  )
+}
