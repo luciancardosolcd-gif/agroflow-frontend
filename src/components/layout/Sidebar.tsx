@@ -21,7 +21,7 @@ const navItems = [
   { href: '/documentos', label: 'Documentos', icon: Settings, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'documentos' },
   { href: '/produtor', label: 'Painel Produtor', icon: Tractor, perfis: ['admin', 'produtor', 'agronomo', 'visitante'], modulo: 'produtor', children: [
     { href: '/produtor/propriedades', label: 'Propriedades', icon: MapPin },
-    { href: '/produtor/safras', label: 'Safras', icon: Sprout },
+    { href: '/produtor/safras', label: 'Safras & Custos', icon: Sprout },
   ]},
   { href: '/relatorios', label: 'Relatórios', icon: BarChart2, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'relatorios' },
   { href: '/users', label: 'Usuários', icon: Users, perfis: ['admin'], modulo: null },
