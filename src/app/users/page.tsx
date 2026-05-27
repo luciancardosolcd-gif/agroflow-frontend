@@ -25,6 +25,7 @@ const modulos = [
   { key: 'produtor', label: 'Painel Produtor' },
   { key: 'relatorios', label: 'Relatórios' },
 ]
+
 const acoes = ['ver', 'criar', 'editar', 'deletar']
 
 const defaultPermissoes = () =>
@@ -85,21 +86,20 @@ export default function UsersPage() {
     setError('')
     setShowModal(true)
   }
-const toggleModulo = (modulo: string) => {
-  const acoesModulo = modulo === 'produtor'
-    ? acoes.filter(a => a !== 'deletar')
-    : modulo === 'relatorios'
-    ? acoes.filter(a => a === 'ver')
-    : acoes
-  const tudoAtivo = acoesModulo.every(a => permissoes[modulo][a])
-  setPermissoes(prev => ({
-    ...prev,
-    [modulo]: acoesModulo.reduce((acc, a) => ({ ...acc, [a]: !tudoAtivo }), {} as Record<string, boolean>)
-  }))
-}
+
+  const togglePermissao = (modulo: string, acao: string) => {
+    setPermissoes(prev => ({
+      ...prev,
+      [modulo]: { ...prev[modulo], [acao]: !prev[modulo][acao] }
+    }))
+  }
 
   const toggleModulo = (modulo: string) => {
-    const acoesModulo = modulo === 'produtor' ? acoes.filter(a => a !== 'deletar') : acoes
+    const acoesModulo = modulo === 'produtor'
+      ? acoes.filter(a => a !== 'deletar')
+      : modulo === 'relatorios'
+      ? acoes.filter(a => a === 'ver')
+      : acoes
     const tudoAtivo = acoesModulo.every(a => permissoes[modulo][a])
     setPermissoes(prev => ({
       ...prev,
@@ -396,7 +396,8 @@ const toggleModulo = (modulo: string) => {
                         </button>
                         {acoes.map(a => (
                           <div key={a} className="flex justify-center">
-                            {m.key === 'produtor' && a === 'deletar' ? (
+                            {(m.key === 'produtor' && a === 'deletar') ||
+                             (m.key === 'relatorios' && (a === 'criar' || a === 'editar' || a === 'deletar')) ? (
                               <div className="w-6 h-6" />
                             ) : (
                               <button onClick={() => togglePermissao(m.key, a)}
