@@ -2,6 +2,9 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Sprout, Calendar } from 'lucide-react'
 import api from '@/lib/api'
+import Cookies from 'js-cookie'
+
+const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
 
 interface Propriedade {
   id: string
@@ -45,6 +48,26 @@ export default function SafrasPage() {
     dataInicio: '', dataFim: '', status: 'planejamento', propriedadeId: ''
   })
   const [saving, setSaving] = useState(false)
+  const [email, setEmail] = useState('')
+  const [perfil, setPerfil] = useState('')
+
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) {
+      const parsed = JSON.parse(u)
+      setEmail(parsed.email || '')
+      setPerfil(parsed.perfil || '')
+    }
+  }, [])
+
+  const isSuperAdmin = SUPER_ADMINS.includes(email)
+  const isAdmin = perfil === 'admin'
+
+  // Todos os admins podem criar e editar safras
+  // Apenas super admins podem deletar
+  const canCreate = isAdmin || isSuperAdmin
+  const canEdit = isAdmin || isSuperAdmin
+  const canDelete = isSuperAdmin
 
   const load = async () => {
     setLoading(true)
@@ -120,9 +143,11 @@ export default function SafrasPage() {
           </h1>
           <p className="text-green-600 text-sm mt-1">Gerencie suas safras e culturas</p>
         </div>
-        <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
-          <Plus className="w-4 h-4" /> Nova Safra
-        </button>
+        {canCreate && (
+          <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
+            <Plus className="w-4 h-4" /> Nova Safra
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -199,7 +224,7 @@ export default function SafrasPage() {
         <div className="text-center py-12 text-green-700">
           <Sprout className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p>Nenhuma safra cadastrada</p>
-          <p className="text-sm mt-1">Clique em "Nova Safra" para começar</p>
+          {canCreate && <p className="text-sm mt-1">Clique em "Nova Safra" para começar</p>}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -211,12 +236,16 @@ export default function SafrasPage() {
                   {s.propriedade && <p className="text-green-600 text-xs mt-0.5">{s.propriedade.nome}</p>}
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={() => openEdit(s)} className="p-1.5 text-green-600 hover:text-green-400">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(s.id)} className="p-1.5 text-red-600 hover:text-red-400">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canEdit && (
+                    <button onClick={() => openEdit(s)} className="p-1.5 text-green-600 hover:text-green-400">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {canDelete && (
+                    <button onClick={() => handleDelete(s.id)} className="p-1.5 text-red-600 hover:text-red-400">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-wrap">
