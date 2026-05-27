@@ -26,17 +26,37 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [perfil, setPerfil] = useState('')
+  const [permissoes, setPermissoes] = useState<Record<string, any>>({})
 
   useEffect(() => {
     const u = Cookies.get('user')
-    if (u) setPerfil(JSON.parse(u).perfil)
+    if (u) {
+      const parsed = JSON.parse(u)
+      setPerfil(parsed.perfil)
+      setPermissoes(parsed.permissoes || {})
+    }
   }, [])
 
+  // Detecta o módulo pelo endpoint
+  const getModulo = () => {
+    if (endpoint.includes('financeiro')) return 'financeiro'
+    if (endpoint.includes('clientes')) return 'clientes'
+    if (endpoint.includes('contratos')) return 'contratos'
+    if (endpoint.includes('estoque')) return 'estoque'
+    if (endpoint.includes('fornecedores')) return 'fornecedores'
+    if (endpoint.includes('maquinarios')) return 'maquinarios'
+    if (endpoint.includes('documentos')) return 'documentos'
+    if (endpoint.includes('produtor')) return 'produtor'
+    return null
+  }
+
+  const modulo = getModulo()
   const isAdmin = perfil === 'admin'
-  const isGestor = perfil === 'gestor'
-  const canCreate = isAdmin || isGestor || perfil === 'operador'
-  const canEdit = isAdmin || isGestor
-  const canDelete = isAdmin
+  const perm = modulo ? (permissoes[modulo] || {}) : {}
+
+  const canCreate = isAdmin || perm.criar === true
+  const canEdit = isAdmin || perm.editar === true
+  const canDelete = isAdmin || perm.deletar === true
 
   const isFinanceiro = endpoint.includes('financeiro')
 
@@ -52,15 +72,11 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
   useEffect(() => { load() }, [endpoint])
 
   const handleNew = () => {
-    if (isFinanceiro) {
-      router.push('/financeiro/novo')
-    }
+    if (isFinanceiro) router.push('/financeiro/novo')
   }
 
   const handleEdit = (item: Record<string, unknown>) => {
-    if (isFinanceiro) {
-      router.push(`/financeiro/editar/${item.id}`)
-    }
+    if (isFinanceiro) router.push(`/financeiro/editar/${item.id}`)
   }
 
   const handleDelete = async (id: unknown) => {
@@ -77,7 +93,6 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
 
   const displayFields = fields.slice(0, 4)
 
-  // Badge de tipo/status
   const renderCell = (item: Record<string, unknown>, f: FieldDef) => {
     const val = String(item[f.key] || '-')
     if (f.key === 'tipo') {
