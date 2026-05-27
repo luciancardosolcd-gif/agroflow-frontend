@@ -37,7 +37,6 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
     }
   }, [])
 
-  // Detecta o módulo pelo endpoint
   const getModulo = () => {
     if (endpoint.includes('financeiro')) return 'financeiro'
     if (endpoint.includes('clientes')) return 'clientes'
@@ -95,6 +94,7 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
 
   const renderCell = (item: Record<string, unknown>, f: FieldDef) => {
     const val = String(item[f.key] || '-')
+
     if (f.key === 'tipo') {
       return (
         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -102,6 +102,7 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
         }`}>{val}</span>
       )
     }
+
     if (f.key === 'status') {
       const colors: Record<string, string> = {
         pago: 'bg-green-500/20 text-green-400',
@@ -114,6 +115,7 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
         </span>
       )
     }
+
     if (f.key === 'valor') {
       const num = parseFloat(val)
       if (!isNaN(num)) {
@@ -125,6 +127,14 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
         )
       }
     }
+
+    if ((f.type === 'date' || f.key === 'data' || f.key === 'dataVencimento') && val && val !== '-') {
+      const date = new Date(val)
+      if (!isNaN(date.getTime())) {
+        return <span className="truncate block max-w-[200px]">{date.toLocaleDateString('pt-BR')}</span>
+      }
+    }
+
     return <span className="truncate block max-w-[200px]">{val}</span>
   }
 
