@@ -94,10 +94,11 @@ export default function UsersPage() {
   }
 
   const toggleModulo = (modulo: string) => {
-    const tudoAtivo = acoes.every(a => permissoes[modulo][a])
+    const acoesModulo = modulo === 'produtor' ? acoes.filter(a => a !== 'deletar') : acoes
+    const tudoAtivo = acoesModulo.every(a => permissoes[modulo][a])
     setPermissoes(prev => ({
       ...prev,
-      [modulo]: acoes.reduce((acc, a) => ({ ...acc, [a]: !tudoAtivo }), {} as Record<string, boolean>)
+      [modulo]: acoesModulo.reduce((acc, a) => ({ ...acc, [a]: !tudoAtivo }), {} as Record<string, boolean>)
     }))
   }
 
@@ -390,18 +391,22 @@ export default function UsersPage() {
                         </button>
                         {acoes.map(a => (
                           <div key={a} className="flex justify-center">
-                            <button onClick={() => togglePermissao(m.key, a)}
-                              className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
-                                permissoes[m.key]?.[a]
-                                  ? 'bg-green-600 border-green-500'
-                                  : 'bg-transparent border-[#365536]'
-                              }`}>
-                              {permissoes[m.key]?.[a] && (
-                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </button>
+                            {m.key === 'produtor' && a === 'deletar' ? (
+                              <div className="w-6 h-6" />
+                            ) : (
+                              <button onClick={() => togglePermissao(m.key, a)}
+                                className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                                  permissoes[m.key]?.[a]
+                                    ? 'bg-green-600 border-green-500'
+                                    : 'bg-transparent border-[#365536]'
+                                }`}>
+                                {permissoes[m.key]?.[a] && (
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </button>
+                            )}
                           </div>
                         ))}
                       </div>
