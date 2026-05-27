@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
 import { useSafraContext } from '@/lib/SafraContext'
-import { Tractor, Leaf, BarChart3, FileText, Package, DollarSign, TrendingUp, TrendingDown, TrendingDown as TrendDown, CloudRain, Thermometer, Wind, Droplets, Activity, AlertTriangle, RefreshCw } from 'lucide-react'
-import PainelCustoRealizado from '@/components/PainelCustoRealizado'
+import { Tractor, Leaf, BarChart3, FileText, Package, DollarSign, TrendingUp, TrendingDown, CloudRain, Thermometer, Wind, Droplets, Activity, AlertTriangle, RefreshCw } from 'lucide-react'
 import SemPermissao from '@/components/ui/SemPermissao'
 import { useDashboardFinanceiro, PeriodoFiltro } from '../financeiro/useDashboardFinanceiro'
 
@@ -27,7 +26,6 @@ const COMMODITIES = [
   { key: 'sorgo', label: 'Sorgo', unidade: 'R$/sc 60kg', cor: 'text-purple-400', bg: 'border-purple-500/20 bg-purple-500/5' },
 ]
 
-// Preços simulados com variação realista (substituir por API real futuramente)
 const gerarCotacoes = () => ({
   soja: { preco: 125.40 + (Math.random() - 0.5) * 4, variacao: (Math.random() - 0.5) * 3 },
   milho: { preco: 58.20 + (Math.random() - 0.5) * 2, variacao: (Math.random() - 0.5) * 2 },
@@ -113,6 +111,7 @@ export default function PainelProdutorPage() {
 
   return (
     <div className="space-y-6">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -290,38 +289,37 @@ export default function PainelProdutorPage() {
       </div>
 
       {/* Gráfico evolução */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
-          <div className="flex gap-4 mb-3">
-            <span className="flex items-center gap-1 text-xs text-gray-400">
-              <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> Receitas
-            </span>
-            <span className="flex items-center gap-1 text-xs text-gray-400">
-              <span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Despesas
-            </span>
-          </div>
-          {loading ? (
-            <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
-          ) : (
-            <GraficoEvolucao dados={evolucao} />
-          )}
+      <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
+        <div className="flex gap-4 mb-3">
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> Receitas
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Despesas
+          </span>
         </div>
-      <div className="grid grid-cols-1 gap-4">
-  <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
-    <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
-    <div className="flex gap-4 mb-3">
-      <span className="flex items-center gap-1 text-xs text-gray-400">
-        <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> Receitas
-      </span>
-      <span className="flex items-center gap-1 text-xs text-gray-400">
-        <span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Despesas
-      </span>
+        {loading ? (
+          <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
+        ) : (
+          <GraficoEvolucao dados={evolucao} />
+        )}
+      </div>
+
+      {/* Módulos */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Módulos Agrícolas</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {modulos.map((mod) => (
+            <div key={mod.label} className={`card border ${mod.bg} opacity-60 cursor-not-allowed`}>
+              <mod.icon className={`w-8 h-8 ${mod.color} mb-3`} />
+              <div className="text-green-200 font-medium text-sm">{mod.label}</div>
+              <div className="text-green-700 text-xs mt-1">{mod.desc}</div>
+              <div className="mt-2 text-xs text-yellow-600">🔒 Em breve</div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
-    {loading ? (
-      <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
-    ) : (
-      <GraficoEvolucao dados={evolucao} />
-    )}
-  </div>
-</div>
+  )
+}
