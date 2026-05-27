@@ -5,7 +5,7 @@ import Cookies from 'js-cookie'
 import { useEffect, useState } from 'react'
 import {
   LayoutDashboard, Users, DollarSign, FileText, Package,
-  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings, Shield, Tractor, MapPin, Sprout
+  UserCheck, Truck, ChevronRight, Cog, LogOut, Settings, Shield, Tractor, MapPin, Sprout, BarChart2
 } from 'lucide-react'
 
 const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
@@ -23,6 +23,7 @@ const navItems = [
     { href: '/produtor/propriedades', label: 'Propriedades', icon: MapPin },
     { href: '/produtor/safras', label: 'Safras', icon: Sprout },
   ]},
+  { href: '/relatorios', label: 'Relatórios', icon: BarChart2, perfis: ['admin', 'gestor', 'operador', 'agronomo', 'visitante'], modulo: 'relatorios' },
   { href: '/users', label: 'Usuários', icon: Users, perfis: ['admin'], modulo: null },
   { href: '/admin', label: 'Admin Panel', icon: Shield, perfis: ['admin'], modulo: null, superAdminOnly: true },
   { href: '/admin/logs', label: 'Log de Acessos', icon: Shield, perfis: ['admin'], modulo: null, superAdminOnly: true },
@@ -64,7 +65,6 @@ export default function Sidebar() {
       setEmail(parsed.email)
       setPermissoes(parsed.permissoes || {})
 
-      // Busca permissões atualizadas do banco
       const token = Cookies.get('accessToken')
       if (parsed.id && token) {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${parsed.id}`, {
