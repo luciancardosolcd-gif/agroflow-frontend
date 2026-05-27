@@ -307,23 +307,21 @@ export default function PainelProdutorPage() {
             <GraficoEvolucao dados={evolucao} />
           )}
         </div>
-        <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
-      </div>
-
-      {/* Módulos */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Módulos Agrícolas</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {modulos.map((mod) => (
-            <div key={mod.label} className={`card border ${mod.bg} opacity-60 cursor-not-allowed`}>
-              <mod.icon className={`w-8 h-8 ${mod.color} mb-3`} />
-              <div className="text-green-200 font-medium text-sm">{mod.label}</div>
-              <div className="text-green-700 text-xs mt-1">{mod.desc}</div>
-              <div className="mt-2 text-xs text-yellow-600">🔒 Em breve</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <div className="grid grid-cols-1 gap-4">
+  <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
+    <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
+    <div className="flex gap-4 mb-3">
+      <span className="flex items-center gap-1 text-xs text-gray-400">
+        <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> Receitas
+      </span>
+      <span className="flex items-center gap-1 text-xs text-gray-400">
+        <span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Despesas
+      </span>
     </div>
-  )
-}
+    {loading ? (
+      <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
+    ) : (
+      <GraficoEvolucao dados={evolucao} />
+    )}
+  </div>
+</div>
