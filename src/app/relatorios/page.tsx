@@ -200,21 +200,21 @@ export default function RelatoriosPage() {
     <div className="rounded-2xl p-4 border border-emerald-500/20 bg-emerald-500/5">
       <p className="text-xs text-gray-400 mb-1">Total Receitas</p>
       <p className="text-xl font-bold text-emerald-400">
-        {formatCurrency(dados.filter(d => d.tipo === 'RECEITA').reduce((s, d) => s + (Number(d.valor) || 0), 0))}
+        {formatCurrency(dados.filter(d => d.tipo === 'RECEITA').reduce((s, d) => s + (parseFloat(d.valor) || 0), 0))}
       </p>
     </div>
     <div className="rounded-2xl p-4 border border-red-500/20 bg-red-500/5">
       <p className="text-xs text-gray-400 mb-1">Total Despesas</p>
       <p className="text-xl font-bold text-red-400">
-        {formatCurrency(dados.filter(d => d.tipo === 'DESPESA').reduce((s, d) => s + (Number(d.valor) || 0), 0))}
+        {formatCurrency(dados.filter(d => d.tipo === 'DESPESA').reduce((s, d) => s + (parseFloat(d.valor) || 0), 0))}
       </p>
     </div>
     <div className="rounded-2xl p-4 border border-blue-500/20 bg-blue-500/5">
       <p className="text-xs text-gray-400 mb-1">Saldo</p>
       <p className="text-xl font-bold text-blue-400">
         {formatCurrency(
-          dados.filter(d => d.tipo === 'RECEITA').reduce((s, d) => s + (Number(d.valor) || 0), 0) -
-          dados.filter(d => d.tipo === 'DESPESA').reduce((s, d) => s + (Number(d.valor) || 0), 0)
+          dados.filter(d => d.tipo === 'RECEITA').reduce((s, d) => s + (parseFloat(d.valor) || 0), 0) -
+          dados.filter(d => d.tipo === 'DESPESA').reduce((s, d) => s + (parseFloat(d.valor) || 0), 0)
         )}
       </p>
     </div>
