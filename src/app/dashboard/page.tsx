@@ -233,23 +233,15 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Módulos */}
-      <div>
-        <h2 className="font-display text-xl text-green-200 mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-500" />
-          Módulos do sistema
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {modules.map((mod) => (
-            <a key={mod.href} href={mod.href}
-              className={`card border ${mod.bg} hover:scale-105 transition-transform duration-200 cursor-pointer group`}>
-              <mod.icon className={`w-8 h-8 ${mod.color} mb-3`} />
-              <div className="text-green-200 font-medium text-sm">{mod.label}</div>
-              <div className="text-green-700 text-xs mt-1 group-hover:text-green-500 transition-colors">Acessar →</div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
+     {/* Módulos */}
+<div>
+  <h2 className="font-display text-xl text-green-200 mb-4 flex items-center gap-2">
+    <TrendingUp className="w-5 h-5 text-green-500" />
+    Módulos do sistema
+  </h2>
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {modules.map((mod) => (
+      ...
+    ))}
+  </div>
+</div>
