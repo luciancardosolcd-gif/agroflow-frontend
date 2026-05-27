@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, Sprout, Calendar } from 'lucide-react'
 import api from '@/lib/api'
 import Cookies from 'js-cookie'
+import PainelCustoRealizado from '@/components/PainelCustoRealizado'
+import { useSafraContext } from '@/lib/SafraContext'
 
 const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
 
@@ -50,6 +52,7 @@ export default function SafrasPage() {
   const [saving, setSaving] = useState(false)
   const [email, setEmail] = useState('')
   const [perfil, setPerfil] = useState('')
+  const { propriedadeId, safraId } = useSafraContext()
 
   useEffect(() => {
     const u = Cookies.get('user')
@@ -62,9 +65,6 @@ export default function SafrasPage() {
 
   const isSuperAdmin = SUPER_ADMINS.includes(email)
   const isAdmin = perfil === 'admin'
-
-  // Todos os admins podem criar e editar safras
-  // Apenas super admins podem deletar
   const canCreate = isAdmin || isSuperAdmin
   const canEdit = isAdmin || isSuperAdmin
   const canDelete = isSuperAdmin
@@ -135,13 +135,15 @@ export default function SafrasPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-green-100 flex items-center gap-2">
             <Sprout className="w-6 h-6 text-green-400" />
-            Safras
+            Safras & Custos
           </h1>
-          <p className="text-green-600 text-sm mt-1">Gerencie suas safras e culturas</p>
+          <p className="text-green-600 text-sm mt-1">Gerencie suas safras e acompanhe custos realizados</p>
         </div>
         {canCreate && (
           <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
@@ -150,6 +152,10 @@ export default function SafrasPage() {
         )}
       </div>
 
+      {/* Custo Realizado */}
+      <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
+
+      {/* Formulário */}
       {showForm && (
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-4">
           <h2 className="text-green-200 font-semibold">{editing ? 'Editar Safra' : 'Nova Safra'}</h2>
@@ -216,60 +222,64 @@ export default function SafrasPage() {
         </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-        </div>
-      ) : safras.length === 0 ? (
-        <div className="text-center py-12 text-green-700">
-          <Sprout className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p>Nenhuma safra cadastrada</p>
-          {canCreate && <p className="text-sm mt-1">Clique em "Nova Safra" para começar</p>}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {safras.map(s => (
-            <div key={s.id} className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-5 space-y-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-green-100 font-semibold">{s.nome}</h3>
-                  {s.propriedade && <p className="text-green-600 text-xs mt-0.5">{s.propriedade.nome}</p>}
+      {/* Lista de safras */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Safras Cadastradas</h2>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : safras.length === 0 ? (
+          <div className="text-center py-12 text-green-700">
+            <Sprout className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>Nenhuma safra cadastrada</p>
+            {canCreate && <p className="text-sm mt-1">Clique em "Nova Safra" para começar</p>}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {safras.map(s => (
+              <div key={s.id} className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-5 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-green-100 font-semibold">{s.nome}</h3>
+                    {s.propriedade && <p className="text-green-600 text-xs mt-0.5">{s.propriedade.nome}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    {canEdit && (
+                      <button onClick={() => openEdit(s)} className="p-1.5 text-green-600 hover:text-green-400">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button onClick={() => handleDelete(s.id)} className="p-1.5 text-red-600 hover:text-red-400">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  {canEdit && (
-                    <button onClick={() => openEdit(s)} className="p-1.5 text-green-600 hover:text-green-400">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                  )}
-                  {canDelete && (
-                    <button onClick={() => handleDelete(s.id)} className="p-1.5 text-red-600 hover:text-red-400">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  {s.cultura && <span className="text-xs px-2 py-0.5 bg-green-900/30 text-green-400 rounded-full border border-green-800/40">{s.cultura}</span>}
+                  {s.ano && <span className="text-xs px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-full border border-blue-800/40">{s.ano}</span>}
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[s.status] || STATUS_COLORS.planejamento}`}>
+                    {STATUS_LABELS[s.status] || s.status}
+                  </span>
                 </div>
+                {s.areaHectares && (
+                  <p className="text-green-600 text-xs">{Number(s.areaHectares).toLocaleString('pt-BR')} ha</p>
+                )}
+                {(s.dataInicio || s.dataFim) && (
+                  <div className="flex items-center gap-1 text-green-700 text-xs">
+                    <Calendar className="w-3 h-3" />
+                    {s.dataInicio ? new Date(s.dataInicio).toLocaleDateString('pt-BR') : '?'}
+                    {' → '}
+                    {s.dataFim ? new Date(s.dataFim).toLocaleDateString('pt-BR') : '?'}
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {s.cultura && <span className="text-xs px-2 py-0.5 bg-green-900/30 text-green-400 rounded-full border border-green-800/40">{s.cultura}</span>}
-                {s.ano && <span className="text-xs px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-full border border-blue-800/40">{s.ano}</span>}
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[s.status] || STATUS_COLORS.planejamento}`}>
-                  {STATUS_LABELS[s.status] || s.status}
-                </span>
-              </div>
-              {s.areaHectares && (
-                <p className="text-green-600 text-xs">{Number(s.areaHectares).toLocaleString('pt-BR')} ha</p>
-              )}
-              {(s.dataInicio || s.dataFim) && (
-                <div className="flex items-center gap-1 text-green-700 text-xs">
-                  <Calendar className="w-3 h-3" />
-                  {s.dataInicio ? new Date(s.dataInicio).toLocaleDateString('pt-BR') : '?'}
-                  {' → '}
-                  {s.dataFim ? new Date(s.dataFim).toLocaleDateString('pt-BR') : '?'}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
