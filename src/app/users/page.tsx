@@ -23,8 +23,8 @@ const modulos = [
   { key: 'maquinarios', label: 'Maquinários' },
   { key: 'documentos', label: 'Documentos' },
   { key: 'produtor', label: 'Painel Produtor' },
+  { key: 'relatorios', label: 'Relatórios' },
 ]
-
 const acoes = ['ver', 'criar', 'editar', 'deletar']
 
 const defaultPermissoes = () =>
