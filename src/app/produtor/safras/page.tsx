@@ -1,224 +1,379 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Plus, Edit2, Trash2, Sprout, Calendar, TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react'
+import api from '@/lib/api'
 import Cookies from 'js-cookie'
-import { Tractor, Leaf, BarChart3, FileText, Package, TrendingUp, TrendingDown, CloudRain, Thermometer, Wind, Droplets, Activity, AlertTriangle, RefreshCw } from 'lucide-react'
-import SemPermissao from '@/components/ui/SemPermissao'
+import PainelCustoRealizado from '@/components/PainelCustoRealizado'
+import { useSafraContext } from '@/lib/SafraContext'
+import { useDashboardFinanceiro, PeriodoFiltro } from '../../financeiro/useDashboardFinanceiro'
 
-const COMMODITIES = [
-  { key: 'soja', label: 'Soja', unidade: 'R$/sc 60kg', cor: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5' },
-  { key: 'milho', label: 'Milho', unidade: 'R$/sc 60kg', cor: 'text-orange-400', bg: 'border-orange-500/20 bg-orange-500/5' },
-  { key: 'boi_gordo', label: 'Boi Gordo', unidade: 'R$/@', cor: 'text-red-400', bg: 'border-red-500/20 bg-red-500/5' },
-  { key: 'cafe', label: 'Café', unidade: 'R$/sc 60kg', cor: 'text-amber-400', bg: 'border-amber-500/20 bg-amber-500/5' },
-  { key: 'algodao', label: 'Algodão', unidade: 'R$/arroba', cor: 'text-blue-400', bg: 'border-blue-500/20 bg-blue-500/5' },
-  { key: 'trigo', label: 'Trigo', unidade: 'R$/sc 60kg', cor: 'text-green-400', bg: 'border-green-500/20 bg-green-500/5' },
-  { key: 'sorgo', label: 'Sorgo', unidade: 'R$/sc 60kg', cor: 'text-purple-400', bg: 'border-purple-500/20 bg-purple-500/5' },
+const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
+
+const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
+  { value: 'MES_ATUAL', label: 'Mês Atual' },
+  { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
+  { value: 'TRIMESTRE', label: 'Trimestre' },
+  { value: 'ANO_ATUAL', label: 'Ano Atual' },
 ]
 
-const gerarCotacoes = () => ({
-  soja: { preco: 125.40 + (Math.random() - 0.5) * 4, variacao: (Math.random() - 0.5) * 3 },
-  milho: { preco: 58.20 + (Math.random() - 0.5) * 2, variacao: (Math.random() - 0.5) * 2 },
-  boi_gordo: { preco: 312.50 + (Math.random() - 0.5) * 8, variacao: (Math.random() - 0.5) * 2 },
-  cafe: { preco: 1420.00 + (Math.random() - 0.5) * 30, variacao: (Math.random() - 0.5) * 3 },
-  algodao: { preco: 118.30 + (Math.random() - 0.5) * 4, variacao: (Math.random() - 0.5) * 2 },
-  trigo: { preco: 72.80 + (Math.random() - 0.5) * 3, variacao: (Math.random() - 0.5) * 2 },
-  sorgo: { preco: 48.60 + (Math.random() - 0.5) * 2, variacao: (Math.random() - 0.5) * 2 },
-})
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
-const gerarClima = () => ({
-  temperatura: (22 + Math.random() * 8).toFixed(1),
-  umidade: Math.floor(60 + Math.random() * 30),
-  vento: (Math.random() * 20).toFixed(1),
-  chuva: (Math.random() * 10).toFixed(1),
-  condicao: ['Ensolarado', 'Parcialmente nublado', 'Nublado', 'Chuva leve'][Math.floor(Math.random() * 4)],
-})
+interface Propriedade {
+  id: string
+  nome: string
+}
 
-export default function PainelProdutorPage() {
-  const [autorizado, setAutorizado] = useState<boolean | null>(null)
-  const [cotacoes, setCotacoes] = useState<Record<string, { preco: number; variacao: number }>>(gerarCotacoes())
-  const [clima, setClima] = useState(gerarClima())
-  const [loadingCotacoes, setLoadingCotacoes] = useState(false)
-  const [ultimaAtualizacao, setUltimaAtualizacao] = useState(new Date())
+interface Safra {
+  id: string
+  nome: string
+  cultura?: string
+  ano?: string
+  areaHectares?: number
+  dataInicio?: string
+  dataFim?: string
+  status: string
+  ativa: boolean
+  propriedadeId?: string
+  propriedade?: Propriedade
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  planejamento: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
+  em_andamento: 'text-green-400 bg-green-400/10 border-green-400/30',
+  finalizada: 'text-gray-400 bg-gray-400/10 border-gray-400/30',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  planejamento: 'Planejamento',
+  em_andamento: 'Em Andamento',
+  finalizada: 'Finalizada',
+}
+
+function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; despesas: number }[] }) {
+  const max = Math.max(...dados.flatMap((d) => [d.receitas, d.despesas]), 1)
+  return (
+    <div className="flex items-end gap-3 h-32 mt-2">
+      {dados.map((d) => (
+        <div key={d.mes} className="flex-1 flex flex-col items-center gap-1">
+          <div className="flex items-end gap-0.5 w-full h-24">
+            <div title={`Receitas: ${formatCurrency(d.receitas)}`}
+              className="flex-1 bg-emerald-500/70 rounded-t transition-all duration-700"
+              style={{ height: `${(d.receitas / max) * 100}%` }} />
+            <div title={`Despesas: ${formatCurrency(d.despesas)}`}
+              className="flex-1 bg-red-500/70 rounded-t transition-all duration-700"
+              style={{ height: `${(d.despesas / max) * 100}%` }} />
+          </div>
+          <span className="text-[10px] text-gray-500">{d.mes.slice(5)}</span>
+        </div>
+      ))}
+      {dados.length === 0 && <p className="text-gray-500 text-sm w-full text-center">Sem dados no período</p>}
+    </div>
+  )
+}
+
+export default function SafrasPage() {
+  const [safras, setSafras] = useState<Safra[]>([])
+  const [propriedades, setPropriedades] = useState<Propriedade[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState<Safra | null>(null)
+  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
+  const [form, setForm] = useState({
+    nome: '', cultura: '', ano: '', areaHectares: '',
+    dataInicio: '', dataFim: '', status: 'planejamento', propriedadeId: ''
+  })
+  const [saving, setSaving] = useState(false)
+  const [email, setEmail] = useState('')
+  const [perfil, setPerfil] = useState('')
+  const { propriedadeId, safraId } = useSafraContext()
+  const { data, loading: loadingFin } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
+  const resumo = data?.resumo
+  const evolucao = data?.evolucaoMensal ?? []
 
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      if (parsed.perfil === 'admin') { setAutorizado(true); return }
-      const perm = parsed.permissoes || {}
-      if (perm?.produtor?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
+      setEmail(parsed.email || '')
+      setPerfil(parsed.perfil || '')
     }
   }, [])
 
-  const atualizarCotacoes = () => {
-    setLoadingCotacoes(true)
-    setTimeout(() => {
-      setCotacoes(gerarCotacoes())
-      setClima(gerarClima())
-      setUltimaAtualizacao(new Date())
-      setLoadingCotacoes(false)
-    }, 800)
+  const isSuperAdmin = SUPER_ADMINS.includes(email)
+  const isAdmin = perfil === 'admin'
+  const canCreate = isAdmin || isSuperAdmin
+  const canEdit = isAdmin || isSuperAdmin
+  const canDelete = isSuperAdmin
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const [safrasRes, propsRes] = await Promise.all([
+        api.get('/safras'),
+        api.get('/propriedades'),
+      ])
+      setSafras(safrasRes.data)
+      setPropriedades(propsRes.data)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  if (autorizado === null) return null
-  if (!autorizado) return <SemPermissao />
+  useEffect(() => { load() }, [])
 
-  const modulos = [
-    { icon: Tractor, label: 'Maquinários', desc: 'Gestão de equipamentos', color: 'text-yellow-400', bg: 'bg-yellow-900/20 border-yellow-800/40' },
-    { icon: Leaf, label: 'Culturas', desc: 'Plantio e colheita', color: 'text-green-400', bg: 'bg-green-900/20 border-green-800/40' },
-    { icon: BarChart3, label: 'Produção', desc: 'Relatórios de produção', color: 'text-blue-400', bg: 'bg-blue-900/20 border-blue-800/40' },
-    { icon: Package, label: 'Insumos', desc: 'Controle de insumos', color: 'text-orange-400', bg: 'bg-orange-900/20 border-orange-800/40' },
-    { icon: FileText, label: 'Relatórios', desc: 'Relatórios do produtor', color: 'text-purple-400', bg: 'bg-purple-900/20 border-purple-800/40' },
-  ]
+  const openNew = () => {
+    setEditing(null)
+    setForm({ nome: '', cultura: '', ano: '', areaHectares: '', dataInicio: '', dataFim: '', status: 'planejamento', propriedadeId: '' })
+    setShowForm(true)
+  }
+
+  const openEdit = (s: Safra) => {
+    setEditing(s)
+    setForm({
+      nome: s.nome,
+      cultura: s.cultura || '',
+      ano: s.ano || '',
+      areaHectares: s.areaHectares ? String(s.areaHectares) : '',
+      dataInicio: s.dataInicio ? s.dataInicio.split('T')[0] : '',
+      dataFim: s.dataFim ? s.dataFim.split('T')[0] : '',
+      status: s.status || 'planejamento',
+      propriedadeId: s.propriedadeId || '',
+    })
+    setShowForm(true)
+  }
+
+  const handleSave = async () => {
+    if (!form.nome) return
+    setSaving(true)
+    try {
+      const payload = {
+        ...form,
+        areaHectares: form.areaHectares ? parseFloat(form.areaHectares) : null,
+        propriedadeId: form.propriedadeId || null,
+      }
+      if (editing) {
+        await api.put(`/safras/${editing.id}`, payload)
+      } else {
+        await api.post('/safras', payload)
+      }
+      setShowForm(false)
+      load()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Excluir esta safra?')) return
+    await api.delete(`/safras/${id}`)
+    load()
+  }
 
   return (
     <div className="space-y-6">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl text-green-100 flex items-center gap-3">
-            <Tractor className="w-8 h-8 text-yellow-400" />
-            Painel do Produtor
+          <h1 className="text-2xl font-bold text-green-100 flex items-center gap-2">
+            <Sprout className="w-6 h-6 text-green-400" />
+            Safras & Custos
           </h1>
-          <p className="text-green-600 mt-1">Visão consolidada da produção agrícola</p>
+          <p className="text-green-600 text-sm mt-1">Gerencie suas safras e acompanhe custos realizados</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <select value={periodo} onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
+            className="bg-white/5 border border-white/10 text-white text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50">
+            {PERIODOS.map((p) => (
+              <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
+            ))}
+          </select>
+          {canCreate && (
+            <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
+              <Plus className="w-4 h-4" /> Nova Safra
+            </button>
+          )}
         </div>
       </div>
 
-      {/* CotaçãoFlow */}
-      <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/3 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-sm font-semibold text-yellow-300">CotaçãoFlow</h2>
-            <span className="text-xs text-gray-500">Commodities Agrícolas</span>
+      {/* KPIs financeiros */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="rounded-2xl p-5 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-400">Receitas</span>
+            <div className="p-2 rounded-xl bg-white/5"><TrendingUp className="w-5 h-5 text-emerald-400" /></div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-600">
-              Atualizado: {ultimaAtualizacao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <button onClick={atualizarCotacoes}
-              className="w-7 h-7 bg-yellow-900/30 border border-yellow-800/40 rounded-lg flex items-center justify-center text-yellow-600 hover:text-yellow-400">
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingCotacoes ? 'animate-spin' : ''}`} />
+          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}</p>
+        </div>
+        <div className="rounded-2xl p-5 border border-red-500/20 bg-red-500/5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-400">Despesas</span>
+            <div className="p-2 rounded-xl bg-white/5"><TrendingDown className="w-5 h-5 text-red-400" /></div>
+          </div>
+          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}</p>
+        </div>
+        <div className="rounded-2xl p-5 border border-blue-500/20 bg-blue-500/5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-400">Saldo</span>
+            <div className="p-2 rounded-xl bg-white/5"><DollarSign className="w-5 h-5 text-blue-400" /></div>
+          </div>
+          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.saldo ?? 0)}</p>
+        </div>
+        <div className="rounded-2xl p-5 border border-purple-500/20 bg-purple-500/5 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-400">Margem</span>
+            <div className="p-2 rounded-xl bg-white/5"><BarChart3 className="w-5 h-5 text-purple-400" /></div>
+          </div>
+          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : `${resumo?.margemLucro ?? 0}%`}</p>
+        </div>
+      </div>
+
+      {/* Gráfico Evolução Mensal */}
+      <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
+        <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
+        <div className="flex gap-4 mb-3">
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="w-2 h-2 rounded-sm bg-emerald-500 inline-block" /> Receitas
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="w-2 h-2 rounded-sm bg-red-500 inline-block" /> Despesas
+          </span>
+        </div>
+        {loadingFin ? (
+          <div className="h-32 flex items-center justify-center text-gray-500 text-sm">Carregando...</div>
+        ) : (
+          <GraficoEvolucao dados={evolucao} />
+        )}
+      </div>
+
+      {/* Custo Realizado */}
+      <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
+
+      {/* Formulário */}
+      {showForm && (
+        <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-4">
+          <h2 className="text-green-200 font-semibold">{editing ? 'Editar Safra' : 'Nova Safra'}</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="text-green-400 text-sm block mb-1">Nome *</label>
+              <input value={form.nome} onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
+                placeholder="Ex: Safra Soja 25/26"
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Cultura</label>
+              <input value={form.cultura} onChange={e => setForm(p => ({ ...p, cultura: e.target.value }))}
+                placeholder="Ex: Soja, Milho, Sorgo"
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Ano</label>
+              <input value={form.ano} onChange={e => setForm(p => ({ ...p, ano: e.target.value }))}
+                placeholder="Ex: 2025/2026"
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Área (ha)</label>
+              <input type="number" value={form.areaHectares} onChange={e => setForm(p => ({ ...p, areaHectares: e.target.value }))}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Status</label>
+              <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value }))}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600">
+                <option value="planejamento">Planejamento</option>
+                <option value="em_andamento">Em Andamento</option>
+                <option value="finalizada">Finalizada</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Propriedade</label>
+              <select value={form.propriedadeId} onChange={e => setForm(p => ({ ...p, propriedadeId: e.target.value }))}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600">
+                <option value="">Selecione a propriedade</option>
+                {propriedades.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Data Início</label>
+              <input type="date" value={form.dataInicio} onChange={e => setForm(p => ({ ...p, dataInicio: e.target.value }))}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
+            </div>
+            <div>
+              <label className="text-green-400 text-sm block mb-1">Data Fim</label>
+              <input type="date" value={form.dataFim} onChange={e => setForm(p => ({ ...p, dataFim: e.target.value }))}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-[#243324] text-green-600 rounded-xl text-sm">Cancelar</button>
+            <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium disabled:opacity-50">
+              {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          {COMMODITIES.map(c => {
-            const cotacao = cotacoes[c.key]
-            const subiu = cotacao.variacao >= 0
-            return (
-              <div key={c.key} className={`rounded-xl p-3 border ${c.bg} flex flex-col gap-1`}>
-                <span className="text-xs text-gray-400 font-medium">{c.label}</span>
-                <span className={`text-base font-bold ${c.cor}`}>
-                  R$ {cotacao.preco.toFixed(2)}
-                </span>
-                <span className={`text-xs font-medium flex items-center gap-0.5 ${subiu ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {subiu ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {subiu ? '+' : ''}{cotacao.variacao.toFixed(2)}%
-                </span>
-                <span className="text-[10px] text-gray-600">{c.unidade}</span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      )}
 
-      {/* Registros Climáticos + Monitoramento */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/3 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <CloudRain className="w-5 h-5 text-blue-400" />
-            <h2 className="text-sm font-semibold text-blue-300">Registros Climáticos</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl p-3 border border-orange-500/20 bg-orange-500/5 flex items-center gap-3">
-              <Thermometer className="w-6 h-6 text-orange-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400">Temperatura</p>
-                <p className="text-lg font-bold text-orange-400">{clima.temperatura}°C</p>
-              </div>
-            </div>
-            <div className="rounded-xl p-3 border border-blue-500/20 bg-blue-500/5 flex items-center gap-3">
-              <Droplets className="w-6 h-6 text-blue-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400">Umidade</p>
-                <p className="text-lg font-bold text-blue-400">{clima.umidade}%</p>
-              </div>
-            </div>
-            <div className="rounded-xl p-3 border border-cyan-500/20 bg-cyan-500/5 flex items-center gap-3">
-              <Wind className="w-6 h-6 text-cyan-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400">Vento</p>
-                <p className="text-lg font-bold text-cyan-400">{clima.vento} km/h</p>
-              </div>
-            </div>
-            <div className="rounded-xl p-3 border border-indigo-500/20 bg-indigo-500/5 flex items-center gap-3">
-              <CloudRain className="w-6 h-6 text-indigo-400 flex-shrink-0" />
-              <div>
-                <p className="text-xs text-gray-400">Chuva</p>
-                <p className="text-lg font-bold text-indigo-400">{clima.chuva} mm</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-3 px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-            <p className="text-xs text-gray-400">Condição atual</p>
-            <p className="text-sm text-white font-medium">{clima.condicao}</p>
-          </div>
-          <p className="text-xs text-gray-600 mt-2 text-center">🔒 Integração com estação meteorológica em breve</p>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/3 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-sm font-semibold text-emerald-300">Monitoramento</h2>
-          </div>
-          <div className="space-y-3">
-            <div className="rounded-xl p-3 border border-yellow-500/20 bg-yellow-500/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-yellow-400" />
-                <span className="text-sm text-gray-300">Pragas e Doenças</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-900/40 text-yellow-400 border border-yellow-800/40">Em breve</span>
-            </div>
-            <div className="rounded-xl p-3 border border-blue-500/20 bg-blue-500/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-blue-400" />
-                <span className="text-sm text-gray-300">Irrigação</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-900/40 text-blue-400 border border-blue-800/40">Em breve</span>
-            </div>
-            <div className="rounded-xl p-3 border border-green-500/20 bg-green-500/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Leaf className="w-4 h-4 text-green-400" />
-                <span className="text-sm text-gray-300">Desenvolvimento das Culturas</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-green-900/40 text-green-400 border border-green-800/40">Em breve</span>
-            </div>
-            <div className="rounded-xl p-3 border border-purple-500/20 bg-purple-500/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-purple-400" />
-                <span className="text-sm text-gray-300">Produtividade por Talhão</span>
-              </div>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/40 text-purple-400 border border-purple-800/40">Em breve</span>
-            </div>
-          </div>
-          <p className="text-xs text-gray-600 mt-3 text-center">🔒 Módulo completo em desenvolvimento</p>
-        </div>
-      </div>
-
-      {/* Módulos */}
+      {/* Lista de safras */}
       <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Módulos Agrícolas</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {modulos.map((mod) => (
-            <div key={mod.label} className={`card border ${mod.bg} opacity-60 cursor-not-allowed`}>
-              <mod.icon className={`w-8 h-8 ${mod.color} mb-3`} />
-              <div className="text-green-200 font-medium text-sm">{mod.label}</div>
-              <div className="text-green-700 text-xs mt-1">{mod.desc}</div>
-              <div className="mt-2 text-xs text-yellow-600">🔒 Em breve</div>
-            </div>
-          ))}
-        </div>
+        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Safras Cadastradas</h2>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : safras.length === 0 ? (
+          <div className="text-center py-12 text-green-700">
+            <Sprout className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p>Nenhuma safra cadastrada</p>
+            {canCreate && <p className="text-sm mt-1">Clique em "Nova Safra" para começar</p>}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {safras.map(s => (
+              <div key={s.id} className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-5 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-green-100 font-semibold">{s.nome}</h3>
+                    {s.propriedade && <p className="text-green-600 text-xs mt-0.5">{s.propriedade.nome}</p>}
+                  </div>
+                  <div className="flex gap-2">
+                    {canEdit && (
+                      <button onClick={() => openEdit(s)} className="p-1.5 text-green-600 hover:text-green-400">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button onClick={() => handleDelete(s.id)} className="p-1.5 text-red-600 hover:text-red-400">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {s.cultura && <span className="text-xs px-2 py-0.5 bg-green-900/30 text-green-400 rounded-full border border-green-800/40">{s.cultura}</span>}
+                  {s.ano && <span className="text-xs px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-full border border-blue-800/40">{s.ano}</span>}
+                  <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[s.status] || STATUS_COLORS.planejamento}`}>
+                    {STATUS_LABELS[s.status] || s.status}
+                  </span>
+                </div>
+                {s.areaHectares && (
+                  <p className="text-green-600 text-xs">{Number(s.areaHectares).toLocaleString('pt-BR')} ha</p>
+                )}
+                {(s.dataInicio || s.dataFim) && (
+                  <div className="flex items-center gap-1 text-green-700 text-xs">
+                    <Calendar className="w-3 h-3" />
+                    {s.dataInicio ? new Date(s.dataInicio).toLocaleDateString('pt-BR') : '?'}
+                    {' → '}
+                    {s.dataFim ? new Date(s.dataFim).toLocaleDateString('pt-BR') : '?'}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
