@@ -8,8 +8,8 @@ import SemPermissao from '@/components/ui/SemPermissao'
 
 const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
 
-const formatCurrency = (v: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+const formatCurrency = (v: any) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(v) || 0)
 
 const formatDate = (d: string) =>
   d ? new Date(d).toLocaleDateString('pt-BR') : '—'
