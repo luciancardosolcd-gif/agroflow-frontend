@@ -52,37 +52,34 @@ export default function SafraSeletor() {
 
   return (
     <div className="flex items-center gap-2">
-      <div className="relative">
-        <div className="flex items-center gap-1.5 bg-[#1a251a] border border-[#243324] rounded-lg px-3 py-1.5 cursor-pointer hover:border-green-700 transition-colors">
-          <MapPin className="w-3.5 h-3.5 text-green-600" />
-          <select
-            value={propriedadeSelecionada}
-            onChange={e => handlePropriedade(e.target.value)}
-            className="bg-transparent text-xs text-green-300 outline-none cursor-pointer pr-1"
-          >
-            <option value="">Todas propriedades</option>
-            {propriedades.map(p => (
-              <option key={p.id} value={p.id}>{p.nome}</option>
-            ))}
-          </select>
-          <ChevronDown className="w-3 h-3 text-green-600" />
-        </div>
+      <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
+        <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+        <select
+          value={propriedadeSelecionada}
+          onChange={e => handlePropriedade(e.target.value)}
+          className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[140px]"
+        >
+          <option value="">Todas propriedades</option>
+          {propriedades.map(p => (
+            <option key={p.id} value={p.id}>{p.nome}</option>
+          ))}
+        </select>
+        <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
       </div>
-      <div className="relative">
-        <div className="flex items-center gap-1.5 bg-[#1a251a] border border-[#243324] rounded-lg px-3 py-1.5 cursor-pointer hover:border-green-700 transition-colors">
-          <Sprout className="w-3.5 h-3.5 text-green-600" />
-          <select
-            value={safraSelecionada}
-            onChange={e => handleSafra(e.target.value)}
-            className="bg-transparent text-xs text-green-300 outline-none cursor-pointer pr-1"
-          >
-            <option value="">Todas safras</option>
-            {safrasFiltradas.map(s => (
-              <option key={s.id} value={s.id}>{s.nome}</option>
-            ))}
-          </select>
-          <ChevronDown className="w-3 h-3 text-green-600" />
-        </div>
+
+      <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
+        <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+        <select
+          value={safraSelecionada}
+          onChange={e => handleSafra(e.target.value)}
+          className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[120px]"
+        >
+          <option value="">Todas safras</option>
+          {safrasFiltradas.map(s => (
+            <option key={s.id} value={s.id}>{s.nome}</option>
+          ))}
+        </select>
+        <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
       </div>
     </div>
   )
