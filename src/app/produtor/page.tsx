@@ -4,6 +4,8 @@ import Cookies from 'js-cookie'
 import { Tractor, Leaf, BarChart3, FileText, Package, TrendingUp, TrendingDown, CloudRain, Thermometer, Wind, Droplets, Activity, AlertTriangle, RefreshCw } from 'lucide-react'
 import SemPermissao from '@/components/ui/SemPermissao'
 
+const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
+
 const COMMODITIES = [
   { key: 'soja', label: 'Soja', unidade: 'R$/sc 60kg', cor: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5' },
   { key: 'milho', label: 'Milho', unidade: 'R$/sc 60kg', cor: 'text-orange-400', bg: 'border-orange-500/20 bg-orange-500/5' },
@@ -34,6 +36,7 @@ const gerarClima = () => ({
 
 export default function PainelProdutorPage() {
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
+  const [email, setEmail] = useState('')
   const [cotacoes, setCotacoes] = useState<Record<string, { preco: number; variacao: number }>>(gerarCotacoes())
   const [clima, setClima] = useState(gerarClima())
   const [loadingCotacoes, setLoadingCotacoes] = useState(false)
@@ -43,6 +46,7 @@ export default function PainelProdutorPage() {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
+      setEmail(parsed.email || '')
       if (parsed.perfil === 'admin') { setAutorizado(true); return }
       const perm = parsed.permissoes || {}
       if (perm?.produtor?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
@@ -61,6 +65,8 @@ export default function PainelProdutorPage() {
 
   if (autorizado === null) return null
   if (!autorizado) return <SemPermissao />
+
+  const isSuperAdmin = SUPER_ADMINS.includes(email)
 
   const modulos = [
     { icon: Tractor, label: 'Maquinários', desc: 'Gestão de equipamentos', color: 'text-yellow-400', bg: 'bg-yellow-900/20 border-yellow-800/40' },
@@ -206,20 +212,22 @@ export default function PainelProdutorPage() {
         </div>
       </div>
 
-      {/* Módulos */}
-      <div>
-        <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Módulos Agrícolas</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {modulos.map((mod) => (
-            <div key={mod.label} className={`card border ${mod.bg} opacity-60 cursor-not-allowed`}>
-              <mod.icon className={`w-8 h-8 ${mod.color} mb-3`} />
-              <div className="text-green-200 font-medium text-sm">{mod.label}</div>
-              <div className="text-green-700 text-xs mt-1">{mod.desc}</div>
-              <div className="mt-2 text-xs text-yellow-600">🔒 Em breve</div>
-            </div>
-          ))}
+      {/* Módulos — apenas super admins */}
+      {isSuperAdmin && (
+        <div>
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Módulos Agrícolas</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {modulos.map((mod) => (
+              <div key={mod.label} className={`card border ${mod.bg} opacity-60 cursor-not-allowed`}>
+                <mod.icon className={`w-8 h-8 ${mod.color} mb-3`} />
+                <div className="text-green-200 font-medium text-sm">{mod.label}</div>
+                <div className="text-green-700 text-xs mt-1">{mod.desc}</div>
+                <div className="mt-2 text-xs text-yellow-600">🔒 Em breve</div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
