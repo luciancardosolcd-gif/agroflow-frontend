@@ -5,7 +5,6 @@ import { TrendingDown, TrendingUp, CheckCircle, AlertCircle, Calendar } from 'lu
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
-// ✅ tipo: string (compatível com LancamentoRecente do hook)
 interface Lancamento {
   id: string
   descricao: string
@@ -59,11 +58,8 @@ export default function FinanceiroTabs({ lancamentos = [], loading = false }: Fi
     return new Date(ref) >= hoje
   }
 
-  // ── Contas a Pagar (DESPESA) ──
   const pagar = useMemo(() => {
-    const list = lancamentos.filter(l =>
-      l.tipo?.toUpperCase() === 'DESPESA'
-    )
+    const list = lancamentos.filter(l => l.tipo?.toUpperCase() === 'DESPESA')
     return {
       emAtraso: { value: sum(list.filter(isAtrasado)), count: list.filter(isAtrasado).length },
       pago:     { value: sum(list.filter(isPago)),     count: list.filter(isPago).length },
@@ -72,11 +68,8 @@ export default function FinanceiroTabs({ lancamentos = [], loading = false }: Fi
     }
   }, [lancamentos])
 
-  // ── Contas a Receber (RECEITA) ──
   const receber = useMemo(() => {
-    const list = lancamentos.filter(l =>
-      l.tipo?.toUpperCase() === 'RECEITA'
-    )
+    const list = lancamentos.filter(l => l.tipo?.toUpperCase() === 'RECEITA')
     return {
       emAtraso: { value: sum(list.filter(isAtrasado)), count: list.filter(isAtrasado).length },
       recebido: { value: sum(list.filter(isPago)),     count: list.filter(isPago).length },
@@ -86,17 +79,17 @@ export default function FinanceiroTabs({ lancamentos = [], loading = false }: Fi
   }, [lancamentos])
 
   const pagarItems: SubItem[] = [
-    { label: 'Em atraso', value: pagar.emAtraso.value, count: pagar.emAtraso.count, color: 'text-red-400',     bg: 'border-red-500/20 bg-red-500/5',         icon: <AlertCircle className="w-4 h-4 text-red-400" />,     prefix: '-' },
-    { label: 'Pago',      value: pagar.pago.value,     count: pagar.pago.count,     color: 'text-emerald-400', bg: 'border-emerald-500/20 bg-emerald-500/5', icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, prefix: '-' },
-    { label: 'Futuro',    value: pagar.futuro.value,   count: pagar.futuro.count,   color: 'text-blue-400',    bg: 'border-blue-500/20 bg-blue-500/5',       icon: <Calendar    className="w-4 h-4 text-blue-400" />,    prefix: '-' },
-    { label: 'Total',     value: pagar.total.value,    count: pagar.total.count,    color: 'text-gray-200',    bg: 'border-white/10 bg-white/5',             icon: <TrendingDown className="w-4 h-4 text-gray-400" />,   prefix: '-' },
+    { label: 'Em atraso', value: pagar.emAtraso.value, count: pagar.emAtraso.count, color: 'text-red-400',     bg: 'border-red-500/20 bg-red-500/5',         icon: <AlertCircle className="w-3 h-3 text-red-400" />,     prefix: '-' },
+    { label: 'Pago',      value: pagar.pago.value,     count: pagar.pago.count,     color: 'text-emerald-400', bg: 'border-emerald-500/20 bg-emerald-500/5', icon: <CheckCircle className="w-3 h-3 text-emerald-400" />, prefix: '-' },
+    { label: 'Futuro',    value: pagar.futuro.value,   count: pagar.futuro.count,   color: 'text-blue-400',    bg: 'border-blue-500/20 bg-blue-500/5',       icon: <Calendar    className="w-3 h-3 text-blue-400" />,    prefix: '-' },
+    { label: 'Total',     value: pagar.total.value,    count: pagar.total.count,    color: 'text-gray-300',    bg: 'border-white/10 bg-white/5',             icon: <TrendingDown className="w-3 h-3 text-gray-400" />,   prefix: '-' },
   ]
 
   const receberItems: SubItem[] = [
-    { label: 'Em atraso', value: receber.emAtraso.value, count: receber.emAtraso.count, color: 'text-red-400',     bg: 'border-red-500/20 bg-red-500/5',         icon: <AlertCircle className="w-4 h-4 text-red-400" />,     prefix: '+' },
-    { label: 'Recebido',  value: receber.recebido.value, count: receber.recebido.count, color: 'text-emerald-400', bg: 'border-emerald-500/20 bg-emerald-500/5', icon: <CheckCircle className="w-4 h-4 text-emerald-400" />, prefix: '+' },
-    { label: 'Futuro',    value: receber.futuro.value,   count: receber.futuro.count,   color: 'text-blue-400',    bg: 'border-blue-500/20 bg-blue-500/5',       icon: <Calendar    className="w-4 h-4 text-blue-400" />,    prefix: '+' },
-    { label: 'Total',     value: receber.total.value,    count: receber.total.count,    color: 'text-gray-200',    bg: 'border-white/10 bg-white/5',             icon: <TrendingUp  className="w-4 h-4 text-gray-400" />,    prefix: '+' },
+    { label: 'Em atraso', value: receber.emAtraso.value, count: receber.emAtraso.count, color: 'text-red-400',     bg: 'border-red-500/20 bg-red-500/5',         icon: <AlertCircle className="w-3 h-3 text-red-400" />,     prefix: '+' },
+    { label: 'Recebido',  value: receber.recebido.value, count: receber.recebido.count, color: 'text-emerald-400', bg: 'border-emerald-500/20 bg-emerald-500/5', icon: <CheckCircle className="w-3 h-3 text-emerald-400" />, prefix: '+' },
+    { label: 'Futuro',    value: receber.futuro.value,   count: receber.futuro.count,   color: 'text-blue-400',    bg: 'border-blue-500/20 bg-blue-500/5',       icon: <Calendar    className="w-3 h-3 text-blue-400" />,    prefix: '+' },
+    { label: 'Total',     value: receber.total.value,    count: receber.total.count,    color: 'text-gray-300',    bg: 'border-white/10 bg-white/5',             icon: <TrendingUp  className="w-3 h-3 text-gray-400" />,    prefix: '+' },
   ]
 
   const items = tab === 'pagar' ? pagarItems : receberItems
@@ -105,7 +98,7 @@ export default function FinanceiroTabs({ lancamentos = [], loading = false }: Fi
     <div className="w-full">
 
       {/* ── Tabs ── */}
-      <div className="flex items-center border-b border-white/8 mb-6">
+      <div className="flex items-center border-b border-white/8 mb-3">
         {([
           { key: 'pagar'   as TabType, label: 'Contas a Pagar',   Icon: TrendingDown },
           { key: 'receber' as TabType, label: 'Contas a Receber', Icon: TrendingUp },
@@ -114,12 +107,12 @@ export default function FinanceiroTabs({ lancamentos = [], loading = false }: Fi
             key={key}
             onClick={() => setTab(key)}
             className={`
-              relative flex items-center gap-2 px-5 py-3
-              text-sm font-semibold transition-all duration-200 select-none
+              relative flex items-center gap-1.5 px-4 py-2
+              text-xs font-semibold transition-all duration-200 select-none
               ${tab === key ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
             `}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-3.5 h-3.5" />
             {label}
             <span className={`
               absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
@@ -130,27 +123,29 @@ export default function FinanceiroTabs({ lancamentos = [], loading = false }: Fi
         ))}
       </div>
 
-      {/* ── Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* ── Cards compactos ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         {items.map((item) => (
           <div
             key={item.label}
-            className={`rounded-2xl border p-4 flex flex-col gap-2 transition-transform duration-200 hover:scale-[1.015] ${item.bg}`}
+            className={`rounded-xl border px-3 py-2.5 flex flex-col gap-1 transition-transform duration-200 hover:scale-[1.015] ${item.bg}`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-400 font-medium">{item.label}</span>
+              <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+                {item.label}
+              </span>
               {item.icon}
             </div>
             <div>
               {loading ? (
-                <div className="h-6 w-28 bg-white/10 rounded-lg animate-pulse" />
+                <div className="h-4 w-20 bg-white/10 rounded animate-pulse" />
               ) : (
-                <p className={`text-base font-bold leading-tight ${item.color}`}>
+                <p className={`text-sm font-bold leading-tight ${item.color}`}>
                   {item.prefix}{formatCurrency(item.value)}
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
-                {item.count} {item.count === 1 ? 'lançamento' : 'lançamentos'}
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                {item.count} {item.count === 1 ? 'lanç.' : 'lanç.'}
               </p>
             </div>
           </div>
