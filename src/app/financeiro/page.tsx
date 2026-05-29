@@ -21,13 +21,8 @@ const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
   { value: 'ANO_ATUAL',    label: 'Ano Atual' },
 ]
 
-// ✅ KpiCard mais compacto — padding menor, fonte menor, ícone menor
 function KpiCard({ title, value, icon, color, sub }: {
-  title: string
-  value: string
-  icon: React.ReactNode
-  color: string
-  sub?: string
+  title: string; value: string; icon: React.ReactNode; color: string; sub?: string
 }) {
   return (
     <div className={`rounded-xl px-4 py-3 border ${color} flex flex-col gap-1.5`}>
@@ -56,7 +51,10 @@ const fields = [
 export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
+
+  // ✅ pega propriedadeId e safraId do contexto global
   const { propriedadeId, safraId } = useSafraContext()
+
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
   )
@@ -69,11 +67,7 @@ export default function FinanceiroPage() {
       const parsed = JSON.parse(u)
       if (parsed.perfil === 'admin') { setAutorizado(true); return }
       const perm = parsed.permissoes || {}
-      if (perm?.financeiro?.ver === true) {
-        setAutorizado(true)
-      } else {
-        setAutorizado(false)
-      }
+      if (perm?.financeiro?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
     }
   }, [])
 
@@ -101,69 +95,54 @@ export default function FinanceiroPage() {
             className="bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
           >
             {PERIODOS.map((p) => (
-              <option key={p.value} value={p.value} className="bg-gray-900">
-                {p.label}
-              </option>
+              <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
             ))}
           </select>
-          <button
-            onClick={refetch}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={refetch}
+            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>
 
-      {/* ── Erro ── */}
       {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
-          {error}
-        </div>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">{error}</div>
       )}
 
-      {/* ── KPI cards — compactos ── */}
+      {/* ── KPI cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          title="Receitas"
+        <KpiCard title="Receitas"
           value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
           icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
-          color="border-emerald-500/20 bg-emerald-500/5"
-        />
-        <KpiCard
-          title="Despesas"
+          color="border-emerald-500/20 bg-emerald-500/5" />
+        <KpiCard title="Despesas"
           value={loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}
           icon={<TrendingDown className="w-4 h-4 text-red-400" />}
-          color="border-red-500/20 bg-red-500/5"
-        />
-        <KpiCard
-          title="Saldo"
+          color="border-red-500/20 bg-red-500/5" />
+        <KpiCard title="Saldo"
           value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}
           icon={<Wallet className="w-4 h-4 text-blue-400" />}
-          color={`border-blue-500/20 ${
-            (resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'
-          }`}
-        />
-        <KpiCard
-          title="Margem"
+          color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`} />
+        <KpiCard title="Margem"
           value={loading ? '...' : `${resumo?.margemLucro ?? 0}%`}
           icon={<BarChart2 className="w-4 h-4 text-purple-400" />}
           color="border-purple-500/20 bg-purple-500/5"
-          sub="Margem de lucro"
-        />
+          sub="Margem de lucro" />
       </div>
 
-      {/* ── Tabs Contas a Pagar / Contas a Receber ── */}
+      {/* ── Tabs ── */}
       <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── CrudPage (mantido intacto) ── */}
+      {/* ── CrudPage com filtro de fazenda ── */}
       <CrudPage
         title="Lançamentos"
         endpoint="/financeiro"
         fields={fields}
         icon={<DollarSign className="w-8 h-8 text-green-400" />}
+        fazendaId={propriedadeId || undefined}
+        safraId={safraId || undefined}
       />
 
     </div>
