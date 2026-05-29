@@ -1,11 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import Cookies from 'js-cookie'
 import api from '@/lib/api'
 import {
   Users, UserCheck, Package, FileText,
   TrendingUp, TrendingDown, CloudRain, Thermometer,
-  Wind, Droplets, Activity, AlertTriangle, RefreshCw, Leaf, BarChart3
+  Wind, Droplets, Activity, AlertTriangle, RefreshCw,
+  Leaf, BarChart3, Home, DollarSign, Truck, Cog,
+  Settings, Tractor, BarChart2, Shield
 } from 'lucide-react'
 
 const getSaudacao = () => {
@@ -43,17 +46,35 @@ const gerarClima = () => ({
   condicao:    ['Ensolarado', 'Parcialmente nublado', 'Nublado', 'Chuva leve'][Math.floor(Math.random() * 4)],
 })
 
-export default function DashboardPage() {
-  const [userName, setUserName]   = useState('')
-  const [perfil, setPerfil]       = useState('')
-  const [permissoes, setPermissoes] = useState<Record<string, any>>({})
-  const [stats, setStats]         = useState({ users: 0, clientes: 0, contratos: 0, estoque: 0 })
-  const [cotacoes, setCotacoes]   = useState<Record<string, { preco: number; variacao: number }>>(gerarCotacoes())
-  const [clima, setClima]         = useState(gerarClima())
-  const [loadingCot, setLoadingCot] = useState(false)
-  const [ultimaAtt, setUltimaAtt] = useState(new Date())
+const ALL_NAV = [
+  { href: '/dashboard',             label: 'Início',          modulo: null,          perfis: ['admin','gestor','operador','agronomo','visitante','produtor'] },
+  { href: '/clientes',              label: 'Clientes',        modulo: 'clientes',    perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/financeiro',            label: 'Financeiro',      modulo: 'financeiro',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/contratos',             label: 'Contratos',       modulo: 'contratos',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/estoque',               label: 'Estoque',         modulo: 'estoque',     perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/fornecedores',          label: 'Fornecedores',    modulo: 'fornecedores',perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/maquinarios',           label: 'Maquinários',     modulo: 'maquinarios', perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/documentos',            label: 'Documentos',      modulo: 'documentos',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/produtor',              label: 'Painel Produtor', modulo: 'produtor',    perfis: ['admin','produtor','agronomo','visitante'] },
+  { href: '/relatorios',            label: 'Relatórios',      modulo: 'relatorios',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/users',                 label: 'Usuários',        modulo: null,          perfis: ['admin'] },
+]
 
-  const temPermissao = (modulo: string) => {
+export default function DashboardPage() {
+  const router   = useRouter()
+  const pathname = usePathname()
+
+  const [userName,   setUserName]   = useState('')
+  const [perfil,     setPerfil]     = useState('')
+  const [permissoes, setPermissoes] = useState<Record<string, any>>({})
+  const [stats,      setStats]      = useState({ users: 0, clientes: 0, contratos: 0, estoque: 0 })
+  const [cotacoes,   setCotacoes]   = useState<Record<string, { preco: number; variacao: number }>>(gerarCotacoes())
+  const [clima,      setClima]      = useState(gerarClima())
+  const [loadingCot, setLoadingCot] = useState(false)
+  const [ultimaAtt,  setUltimaAtt]  = useState(new Date())
+
+  const temPermissao = (modulo: string | null) => {
+    if (!modulo) return perfil === 'admin'
     if (perfil === 'admin') return true
     return permissoes[modulo]?.ver === true
   }
@@ -69,7 +90,7 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
-    const loadStats = async () => {
+    const load = async () => {
       try {
         const [users, clientes, contratos, estoque] = await Promise.allSettled([
           api.get('/users'), api.get('/clientes'), api.get('/contratos'), api.get('/estoque'),
@@ -82,7 +103,7 @@ export default function DashboardPage() {
         })
       } catch {}
     }
-    loadStats()
+    load()
   }, [])
 
   const atualizar = () => {
@@ -95,8 +116,13 @@ export default function DashboardPage() {
     }, 800)
   }
 
+  const navVisivel = ALL_NAV.filter(item => {
+    if (!item.perfis.includes(perfil)) return false
+    return temPermissao(item.modulo)
+  })
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
       {/* ── Saudação ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -112,6 +138,36 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* ── Barra de navegação horizontal estilo Aegro ── */}
+      <div className="w-full overflow-x-auto scrollbar-none">
+        <div className="flex items-center border-b border-white/8 min-w-max">
+          {navVisivel.map(item => {
+            const active = pathname === item.href
+            return (
+              <button
+                key={item.href}
+                onClick={() => router.push(item.href)}
+                className={`
+                  relative px-4 py-2.5 text-sm font-medium
+                  transition-all duration-200 whitespace-nowrap select-none
+                  ${active
+                    ? 'text-white'
+                    : 'text-gray-500 hover:text-gray-300'
+                  }
+                `}
+              >
+                {item.label}
+                <span className={`
+                  absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
+                  transition-all duration-300
+                  ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
+                `}/>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* ── Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
@@ -120,8 +176,8 @@ export default function DashboardPage() {
           { label: 'Contratos', value: stats.contratos, icon: FileText,  color: 'text-yellow-400', modulo: 'contratos' },
           { label: 'Estoque',   value: stats.estoque,   icon: Package,   color: 'text-orange-400', modulo: 'estoque' },
         ]
-          .filter(s => s.modulo === null ? perfil === 'admin' : temPermissao(s.modulo))
-          .map((stat) => (
+          .filter(s => temPermissao(s.modulo))
+          .map(stat => (
             <div key={stat.label} className="card flex items-center gap-3 p-4">
               <div className="w-10 h-10 bg-[#1a251a] rounded-xl flex items-center justify-center flex-shrink-0">
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -173,8 +229,6 @@ export default function DashboardPage() {
 
       {/* ── Clima + Monitoramento ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-        {/* Clima */}
         <div className="rounded-2xl border border-blue-500/20 bg-blue-500/3 p-5">
           <div className="flex items-center gap-2 mb-4">
             <CloudRain className="w-5 h-5 text-blue-400" />
@@ -217,7 +271,6 @@ export default function DashboardPage() {
           <p className="text-xs text-gray-600 mt-2 text-center">🔒 Integração com estação meteorológica em breve</p>
         </div>
 
-        {/* Monitoramento */}
         <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/3 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-emerald-400" />
@@ -225,10 +278,10 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-3">
             {[
-              { icon: AlertTriangle, label: 'Pragas e Doenças',          color: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5', badge: 'bg-yellow-900/40 text-yellow-400 border-yellow-800/40' },
-              { icon: Droplets,      label: 'Irrigação',                  color: 'text-blue-400',   bg: 'border-blue-500/20 bg-blue-500/5',     badge: 'bg-blue-900/40 text-blue-400 border-blue-800/40' },
+              { icon: AlertTriangle, label: 'Pragas e Doenças',           color: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5', badge: 'bg-yellow-900/40 text-yellow-400 border-yellow-800/40' },
+              { icon: Droplets,      label: 'Irrigação',                   color: 'text-blue-400',   bg: 'border-blue-500/20 bg-blue-500/5',     badge: 'bg-blue-900/40 text-blue-400 border-blue-800/40' },
               { icon: Leaf,          label: 'Desenvolvimento das Culturas', color: 'text-green-400',  bg: 'border-green-500/20 bg-green-500/5',   badge: 'bg-green-900/40 text-green-400 border-green-800/40' },
-              { icon: BarChart3,     label: 'Produtividade por Talhão',   color: 'text-purple-400', bg: 'border-purple-500/20 bg-purple-500/5', badge: 'bg-purple-900/40 text-purple-400 border-purple-800/40' },
+              { icon: BarChart3,     label: 'Produtividade por Talhão',    color: 'text-purple-400', bg: 'border-purple-500/20 bg-purple-500/5', badge: 'bg-purple-900/40 text-purple-400 border-purple-800/40' },
             ].map(item => (
               <div key={item.label} className={`rounded-xl p-3 border ${item.bg} flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
