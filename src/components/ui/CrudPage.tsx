@@ -18,9 +18,13 @@ interface CrudPageProps {
   endpoint: string
   fields: FieldDef[]
   icon: React.ReactNode
+  fazendaId?: string  // ✅ novo prop opcional
+  safraId?: string    // ✅ novo prop opcional
 }
 
-export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProps) {
+export default function CrudPage({
+  title, endpoint, fields, icon, fazendaId, safraId
+}: CrudPageProps) {
   const router = useRouter()
   const [items, setItems] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
@@ -54,21 +58,32 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
   const perm = modulo ? (permissoes[modulo] || {}) : {}
 
   const canCreate = isAdmin || perm.criar === true
-  const canEdit = isAdmin || perm.editar === true
+  const canEdit   = isAdmin || perm.editar === true
   const canDelete = isAdmin || perm.deletar === true
 
   const isFinanceiro = endpoint.includes('financeiro')
 
+  // ✅ FIX: inclui fazendaId e safraId na requisição
+  const buildUrl = () => {
+    let url = endpoint
+    const params: string[] = []
+    if (fazendaId) params.push(`fazendaId=${fazendaId}`)
+    if (safraId)   params.push(`safraId=${safraId}`)
+    if (params.length > 0) url += `?${params.join('&')}`
+    return url
+  }
+
   const load = async () => {
     setLoading(true)
     try {
-      const { data } = await api.get(endpoint)
+      const { data } = await api.get(buildUrl())
       setItems(Array.isArray(data) ? data : [])
     } catch { setItems([]) }
     finally { setLoading(false) }
   }
 
-  useEffect(() => { load() }, [endpoint])
+  // ✅ recarrega quando fazendaId ou safraId mudam
+  useEffect(() => { load() }, [endpoint, fazendaId, safraId])
 
   const handleNew = () => {
     if (isFinanceiro) router.push('/financeiro/novo')
@@ -105,9 +120,9 @@ export default function CrudPage({ title, endpoint, fields, icon }: CrudPageProp
 
     if (f.key === 'status') {
       const colors: Record<string, string> = {
-        pago: 'bg-green-500/20 text-green-400',
-        pendente: 'bg-yellow-500/20 text-yellow-400',
-        'Em Aberto': 'bg-blue-500/20 text-blue-400',
+        pago:       'bg-green-500/20 text-green-400',
+        pendente:   'bg-yellow-500/20 text-yellow-400',
+        'Em Aberto':'bg-blue-500/20 text-blue-400',
       }
       return (
         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[val] || 'bg-gray-500/20 text-gray-400'}`}>
