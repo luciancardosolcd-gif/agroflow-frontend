@@ -21,16 +21,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex flex-col min-h-screen bg-[#0a0f0a]">
 
-      {/* ── Header — altura maior para acomodar logo ── */}
-      <header className="h-20 bg-[#0d160d] border-b border-[#1a251a] flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-30 w-full">
+      {/* ── Header ── */}
+      <header className="h-24 bg-[#0d160d] border-b border-[#1a251a] flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-30 w-full">
 
-        {/* Esquerda: Logo grande e visível */}
+        {/* Logo */}
         <div className="flex items-center">
           <img
             src={LOGO_SRC}
             alt="AgroFlow"
             style={{
-              height: '62px',
+              height: '78px',
               width: 'auto',
               objectFit: 'contain',
               display: 'block',
