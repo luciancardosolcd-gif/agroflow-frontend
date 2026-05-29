@@ -47,20 +47,23 @@ export interface DashboardData {
 
 export function useDashboardFinanceiro(
   periodo: PeriodoFiltro = 'MES_ATUAL',
-  fazendaId?: string,
+  propriedadeId?: string,  // ← vem do SafraContext
   safraId?: string,
 ) {
-  const [data, setData] = useState<DashboardData | null>(null)
+  const [data, setData]       = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError]     = useState<string | null>(null)
 
   const fetchDashboard = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
+
+      // ✅ FIX: usa propriedadeId como fazendaId no query param
       let url = `/fin-dashboard?periodo=${periodo}`
-      if (fazendaId) url += `&fazendaId=${fazendaId}`
-      if (safraId) url += `&safraId=${safraId}`
+      if (propriedadeId && propriedadeId !== '') url += `&fazendaId=${propriedadeId}`
+      if (safraId && safraId !== '')             url += `&safraId=${safraId}`
+
       const response = await api.get(url)
       setData(response.data)
     } catch (err: any) {
@@ -68,7 +71,7 @@ export function useDashboardFinanceiro(
     } finally {
       setLoading(false)
     }
-  }, [periodo, fazendaId, safraId])
+  }, [periodo, propriedadeId, safraId])
 
   useEffect(() => {
     fetchDashboard()
