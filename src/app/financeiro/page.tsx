@@ -1,7 +1,6 @@
 'use client'
 import { useSafraContext } from '@/lib/SafraContext'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import {
   DollarSign, TrendingUp, TrendingDown,
@@ -44,12 +43,12 @@ function KpiCard({ title, value, icon, color, sub }: {
 }
 
 const fields = [
-  { key: 'descricao',      label: 'Descrição',        required: true },
-  { key: 'valor',          label: 'Valor',             type: 'number' },
-  { key: 'tipo',           label: 'Tipo',              type: 'select', options: ['RECEITA', 'DESPESA'] },
-  { key: 'data',           label: 'Data',              type: 'date' },
-  { key: 'status',         label: 'Status',            type: 'select', options: ['pendente', 'pago', 'Em Aberto'] },
-  { key: 'dataVencimento', label: 'Data Vencimento',   type: 'date' },
+  { key: 'descricao',      label: 'Descrição',      required: true },
+  { key: 'valor',          label: 'Valor',           type: 'number' },
+  { key: 'tipo',           label: 'Tipo',            type: 'select', options: ['RECEITA', 'DESPESA'] },
+  { key: 'data',           label: 'Data',            type: 'date' },
+  { key: 'status',         label: 'Status',          type: 'select', options: ['pendente', 'pago', 'Em Aberto'] },
+  { key: 'dataVencimento', label: 'Data Vencimento', type: 'date' },
   { key: 'observacao',     label: 'Observação' },
 ]
 
@@ -57,11 +56,13 @@ export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const { propriedadeId, safraId } = useSafraContext()
-  const { data, loading, error, refetch } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
+  const { data, loading, error, refetch } = useDashboardFinanceiro(
+    periodo, propriedadeId, safraId
+  )
   const resumo = data?.resumo
 
-  // ── Lançamentos brutos para os tabs (vêm do hook existente) ──
-  const lancamentos = data?.lancamentos ?? []
+  // ✅ CORRIGIDO: usa lancamentosRecentes (nome correto do tipo DashboardData)
+  const lancamentos = data?.lancamentosRecentes ?? []
 
   useEffect(() => {
     const u = Cookies.get('user')
@@ -69,7 +70,11 @@ export default function FinanceiroPage() {
       const parsed = JSON.parse(u)
       if (parsed.perfil === 'admin') { setAutorizado(true); return }
       const perm = parsed.permissoes || {}
-      if (perm?.financeiro?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
+      if (perm?.financeiro?.ver === true) {
+        setAutorizado(true)
+      } else {
+        setAutorizado(false)
+      }
     }
   }, [])
 
@@ -118,7 +123,7 @@ export default function FinanceiroPage() {
         </div>
       )}
 
-      {/* ── KPI cards existentes (mantidos intactos) ── */}
+      {/* ── KPI cards (mantidos intactos) ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
           title="Receitas"
@@ -136,7 +141,9 @@ export default function FinanceiroPage() {
           title="Saldo"
           value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}
           icon={<Wallet className="w-5 h-5 text-blue-400" />}
-          color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`}
+          color={`border-blue-500/20 ${
+            (resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'
+          }`}
         />
         <KpiCard
           title="Margem"
@@ -147,12 +154,12 @@ export default function FinanceiroPage() {
         />
       </div>
 
-      {/* ── NOVO: Tabs Contas a Pagar / Contas a Receber ── */}
-      <div className="rounded-2xl border border-white/8 bg-white/2 p-5">
+      {/* ── Tabs Contas a Pagar / Contas a Receber ── */}
+      <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-5">
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── Tabela de lançamentos (CrudPage existente — mantido intacto) ── */}
+      {/* ── CrudPage (mantido intacto) ── */}
       <CrudPage
         title="Lançamentos"
         endpoint="/financeiro"
