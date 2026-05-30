@@ -197,39 +197,42 @@ export default function SafrasPage() {
         </div>
       </div>
 
-      {/* KPIs financeiros */}
+      {/* ── 1. KPIs — padding reduzido igual ao Financeiro ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl p-5 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-3">
+        <div className="rounded-2xl p-4 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-400">Receitas</span>
-            <div className="p-2 rounded-xl bg-white/5"><TrendingUp className="w-5 h-5 text-emerald-400" /></div>
+            <div className="p-1.5 rounded-xl bg-white/5"><TrendingUp className="w-4 h-4 text-emerald-400" /></div>
           </div>
-          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}</p>
+          <p className="text-xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}</p>
         </div>
-        <div className="rounded-2xl p-5 border border-red-500/20 bg-red-500/5 flex flex-col gap-3">
+        <div className="rounded-2xl p-4 border border-red-500/20 bg-red-500/5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-400">Despesas</span>
-            <div className="p-2 rounded-xl bg-white/5"><TrendingDown className="w-5 h-5 text-red-400" /></div>
+            <div className="p-1.5 rounded-xl bg-white/5"><TrendingDown className="w-4 h-4 text-red-400" /></div>
           </div>
-          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}</p>
+          <p className="text-xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}</p>
         </div>
-        <div className="rounded-2xl p-5 border border-blue-500/20 bg-blue-500/5 flex flex-col gap-3">
+        <div className="rounded-2xl p-4 border border-blue-500/20 bg-blue-500/5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-400">Saldo</span>
-            <div className="p-2 rounded-xl bg-white/5"><DollarSign className="w-5 h-5 text-blue-400" /></div>
+            <div className="p-1.5 rounded-xl bg-white/5"><DollarSign className="w-4 h-4 text-blue-400" /></div>
           </div>
-          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.saldo ?? 0)}</p>
+          <p className="text-xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.saldo ?? 0)}</p>
         </div>
-        <div className="rounded-2xl p-5 border border-purple-500/20 bg-purple-500/5 flex flex-col gap-3">
+        <div className="rounded-2xl p-4 border border-purple-500/20 bg-purple-500/5 flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-400">Margem</span>
-            <div className="p-2 rounded-xl bg-white/5"><BarChart3 className="w-5 h-5 text-purple-400" /></div>
+            <div className="p-1.5 rounded-xl bg-white/5"><BarChart3 className="w-4 h-4 text-purple-400" /></div>
           </div>
-          <p className="text-2xl font-bold text-white">{loadingFin ? '...' : `${resumo?.margemLucro ?? 0}%`}</p>
+          <p className="text-xl font-bold text-white">{loadingFin ? '...' : `${resumo?.margemLucro ?? 0}%`}</p>
         </div>
       </div>
 
-      {/* Gráfico Evolução Mensal */}
+      {/* ── 2. Custo Realizado (subiu para antes da Evolução Mensal) ── */}
+      <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
+
+      {/* ── 3. Evolução Mensal (desceu para depois do Custo Realizado) ── */}
       <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
         <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
         <div className="flex gap-4 mb-3">
@@ -246,9 +249,6 @@ export default function SafrasPage() {
           <GraficoEvolucao dados={evolucao} />
         )}
       </div>
-
-      {/* Custo Realizado */}
-      <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
 
       {/* Formulário */}
       {showForm && (
