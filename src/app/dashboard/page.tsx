@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import {
   Users, UserCheck, Package, FileText,
   TrendingUp, TrendingDown, CloudRain, Thermometer,
-  Wind, Droplets, Activity, AlertTriangle, RefreshCw,
+  Wind, Droplets, Activity, AlertTriangle, RefreshCw, 
   Leaf, BarChart3
 } from 'lucide-react'
 
