@@ -32,14 +32,18 @@ export default function CrudPage({
   const [perfil, setPerfil] = useState('')
   const [permissoes, setPermissoes] = useState<Record<string, any>>({})
 
-  useEffect(() => {
-    const u = Cookies.get('user')
-    if (u) {
-      const parsed = JSON.parse(u)
-      setPerfil(parsed.perfil)
-      setPermissoes(parsed.permissoes || {})
+ // ANTES (linha atual):
+useEffect(() => {
+    if (fazendaId !== undefined) load()
+}, [endpoint, fazendaId, safraId])
+
+// DEPOIS:
+useEffect(() => {
+    if (fazendaId !== undefined) {
+      setItems([])
+      load()
     }
-  }, [])
+}, [endpoint, fazendaId, safraId])
 
   const getModulo = () => {
     if (endpoint.includes('financeiro')) return 'financeiro'
