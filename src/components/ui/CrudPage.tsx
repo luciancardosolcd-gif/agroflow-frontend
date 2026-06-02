@@ -32,18 +32,21 @@ export default function CrudPage({
   const [perfil, setPerfil] = useState('')
   const [permissoes, setPermissoes] = useState<Record<string, any>>({})
 
- // ANTES (linha atual):
-useEffect(() => {
-    if (fazendaId !== undefined) load()
-}, [endpoint, fazendaId, safraId])
+  useEffect(() => {
+    const u = Cookies.get('user')
+    if (u) {
+      const parsed = JSON.parse(u)
+      setPerfil(parsed.perfil || '')
+      setPermissoes(parsed.permissoes || {})
+    }
+  }, [])
 
-// DEPOIS:
-useEffect(() => {
+  useEffect(() => {
     if (fazendaId !== undefined) {
       setItems([])
-      load()
+      if (fazendaId !== '') load()
     }
-}, [endpoint, fazendaId, safraId])
+  }, [endpoint, fazendaId, safraId])
 
   const getModulo = () => {
     if (endpoint.includes('financeiro')) return 'financeiro'
@@ -84,10 +87,6 @@ useEffect(() => {
     } catch { setItems([]) }
     finally { setLoading(false) }
   }
-
-  useEffect(() => {
-    if (fazendaId !== undefined) load()
-  }, [endpoint, fazendaId, safraId])
 
   const handleNew = () => {
     if (isFinanceiro) router.push('/financeiro/novo')
