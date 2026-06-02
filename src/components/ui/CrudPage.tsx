@@ -1,156 +1,251 @@
 'use client'
-import { useSafraContext } from '@/lib/SafraContext'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import api from '@/lib/api'
 import Cookies from 'js-cookie'
-import {
-  DollarSign, TrendingUp, TrendingDown,
-  Wallet, BarChart2, RefreshCw
-} from 'lucide-react'
-import CrudPage from '@/components/ui/CrudPage'
-import SemPermissao from '@/components/ui/SemPermissao'
-import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
-import FinanceiroTabs from '@/components/FinanceiroTabs'
+import { Plus, Trash2, Edit, Search, RefreshCw } from 'lucide-react'
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-
-const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
-  { value: 'MES_ATUAL',    label: 'Mês Atual' },
-  { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
-  { value: 'TRIMESTRE',    label: 'Trimestre' },
-  { value: 'ANO_ATUAL',    label: 'Ano Atual' },
-]
-
-function KpiCard({ title, value, icon, color, sub }: {
-  title: string; value: string; icon: React.ReactNode; color: string; sub?: string
-}) {
-  return (
-    <div className={`rounded-xl px-4 py-3 border ${color} flex flex-col gap-1.5`}>
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-400">{title}</span>
-        <div className="p-1.5 rounded-lg bg-white/5">{icon}</div>
-      </div>
-      <div>
-        <p className="text-base font-bold text-white leading-tight">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  )
+interface FieldDef {
+  key: string
+  label: string
+  type?: string
+  required?: boolean
+  options?: string[]
 }
 
-const fields = [
-  { key: 'descricao',      label: 'Descrição',      required: true },
-  { key: 'valor',          label: 'Valor',           type: 'number' },
-  { key: 'tipo',           label: 'Tipo',            type: 'select', options: ['RECEITA', 'DESPESA'] },
-  { key: 'data',           label: 'Data',            type: 'date' },
-  { key: 'status',         label: 'Status',          type: 'select', options: ['pendente', 'pago', 'Em Aberto'] },
-  { key: 'dataVencimento', label: 'Data Vencimento', type: 'date' },
-  { key: 'observacao',     label: 'Observação' },
-]
+interface CrudPageProps {
+  title: string
+  endpoint: string
+  fields: FieldDef[]
+  icon: React.ReactNode
+  fazendaId?: string
+  safraId?: string
+}
 
-export default function FinanceiroPage() {
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
-  const [autorizado, setAutorizado] = useState<boolean | null>(null)
-
-  const { propriedadeId, safraId } = useSafraContext()
-
-  const { data, loading, error, refetch } = useDashboardFinanceiro(
-    periodo, propriedadeId, safraId
-  )
-  const resumo = data?.resumo
-  const lancamentos = data?.lancamentosRecentes ?? []
+export default function CrudPage({
+  title, endpoint, fields, icon, fazendaId, safraId
+}: CrudPageProps) {
+  const router = useRouter()
+  const [items, setItems] = useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [perfil, setPerfil] = useState('')
+  const [permissoes, setPermissoes] = useState<Record<string, any>>({})
 
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      if (parsed.perfil === 'admin') { setAutorizado(true); return }
-      const perm = parsed.permissoes || {}
-      if (perm?.financeiro?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
+      setPerfil(parsed.perfil)
+      setPermissoes(parsed.permissoes || {})
     }
   }, [])
 
-  if (autorizado === null) return null
-  if (!autorizado) return <SemPermissao />
+  const getModulo = () => {
+    if (endpoint.includes('financeiro')) return 'financeiro'
+    if (endpoint.includes('clientes')) return 'clientes'
+    if (endpoint.includes('contratos')) return 'contratos'
+    if (endpoint.includes('estoque')) return 'estoque'
+    if (endpoint.includes('fornecedores')) return 'fornecedores'
+    if (endpoint.includes('maquinarios')) return 'maquinarios'
+    if (endpoint.includes('documentos')) return 'documentos'
+    if (endpoint.includes('produtor')) return 'produtor'
+    return null
+  }
+
+  const modulo = getModulo()
+  const isAdmin = perfil === 'admin'
+  const perm = modulo ? (permissoes[modulo] || {}) : {}
+
+  const canCreate = isAdmin || perm.criar === true
+  const canEdit   = isAdmin || perm.editar === true
+  const canDelete = isAdmin || perm.deletar === true
+
+  const isFinanceiro = endpoint.includes('financeiro')
+
+  const buildUrl = () => {
+    let url = endpoint
+    const params: string[] = []
+    if (fazendaId) params.push(`fazendaId=${fazendaId}`)
+    if (safraId)   params.push(`safraId=${safraId}`)
+    if (params.length > 0) url += `?${params.join('&')}`
+    return url
+  }
+
+  const load = async () => {
+    setLoading(true)
+    try {
+      const { data } = await api.get(buildUrl())
+      setItems(Array.isArray(data) ? data : [])
+    } catch { setItems([]) }
+    finally { setLoading(false) }
+  }
+
+  useEffect(() => {
+    if (fazendaId !== undefined) load()
+  }, [endpoint, fazendaId, safraId])
+
+  const handleNew = () => {
+    if (isFinanceiro) router.push('/financeiro/novo')
+  }
+
+  const handleEdit = (item: Record<string, unknown>) => {
+    if (isFinanceiro) router.push(`/financeiro/editar/${item.id}`)
+  }
+
+  const handleDelete = async (id: unknown) => {
+    if (!confirm('Confirmar exclusão?')) return
+    try {
+      await api.delete(`${endpoint}/${id}`)
+      load()
+    } catch {}
+  }
+
+  const filtered = items.filter(item =>
+    fields.some(f => String(item[f.key] || '').toLowerCase().includes(search.toLowerCase()))
+  )
+
+  const displayFields = fields.slice(0, 4)
+
+  const renderCell = (item: Record<string, unknown>, f: FieldDef) => {
+    const val = String(item[f.key] || '-')
+
+    if (f.key === 'tipo') {
+      return (
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          val === 'RECEITA' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+        }`}>{val}</span>
+      )
+    }
+
+    if (f.key === 'status') {
+      const colors: Record<string, string> = {
+        pago:       'bg-green-500/20 text-green-400',
+        pendente:   'bg-yellow-500/20 text-yellow-400',
+        'Em Aberto':'bg-blue-500/20 text-blue-400',
+      }
+      return (
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[val] || 'bg-gray-500/20 text-gray-400'}`}>
+          {val}
+        </span>
+      )
+    }
+
+    if (f.key === 'valor') {
+      const num = parseFloat(val)
+      if (!isNaN(num)) {
+        return (
+          <span className={item['tipo'] === 'RECEITA' ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
+            {item['tipo'] === 'RECEITA' ? '+' : '-'}
+            {num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </span>
+        )
+      }
+    }
+
+    if ((f.type === 'date' || f.key === 'data' || f.key === 'dataVencimento') && val && val !== '-') {
+      const date = new Date(val)
+      if (!isNaN(date.getTime())) {
+        return <span className="truncate block max-w-[200px]">{date.toLocaleDateString('pt-BR')}</span>
+      }
+    }
+
+    return <span className="truncate block max-w-[200px]">{val}</span>
+  }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-3xl text-green-100 flex items-center gap-3">{icon}{title}</h1>
+          <p className="text-green-600 mt-1">
+            {items.length} registro{items.length !== 1 ? 's' : ''} encontrado{items.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={load} className="btn-secondary"><RefreshCw className="w-4 h-4" /></button>
+          {canCreate && (
+            <button onClick={handleNew} className="btn-primary">
+              <Plus className="w-4 h-4" />Novo
+            </button>
+          )}
+        </div>
+      </div>
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-green-500/10">
-            <DollarSign className="w-6 h-6 text-green-400" />
+      <div className="card">
+        <div className="flex items-center gap-3 bg-[#1a251a] rounded-lg px-4 py-2.5 mb-6 border border-[#243324]">
+          <Search className="w-4 h-4 text-green-600" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={`Buscar em ${title.toLowerCase()}...`}
+            className="bg-transparent text-sm text-green-300 placeholder-green-700 outline-none flex-1"
+          />
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">Financeiro</h1>
-            <p className="text-xs text-gray-400">Lançamentos de receitas e despesas.</p>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-green-700">
+            <div className="text-4xl mb-3">📋</div>
+            <div>Nenhum registro encontrado</div>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
-            className="bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
-          >
-            {PERIODOS.map((p) => (
-              <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
-            ))}
-          </select>
-          <button onClick={refetch}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors">
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#243324]">
+                  {displayFields.map(f => (
+                    <th key={f.key} className="text-left py-3 px-4 text-green-600 font-medium">{f.label}</th>
+                  ))}
+                  {(canEdit || canDelete) && (
+                    <th className="text-right py-3 px-4 text-green-600 font-medium">Ações</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((item, i) => (
+                  <tr
+                    key={String(item.id || i)}
+                    className="border-b border-[#1a251a] hover:bg-[#1a251a]/50 transition-colors cursor-pointer"
+                    onClick={() => canEdit && handleEdit(item)}
+                  >
+                    {displayFields.map(f => (
+                      <td key={f.key} className="py-3 px-4 text-green-300">
+                        {renderCell(item, f)}
+                      </td>
+                    ))}
+                    {(canEdit || canDelete) && (
+                      <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2">
+                          {canEdit && (
+                            <button
+                              onClick={() => handleEdit(item)}
+                              className="w-8 h-8 bg-[#1a251a] hover:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 transition-colors border border-[#243324]"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="w-8 h-8 bg-[#1a251a] hover:bg-red-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-red-400 transition-colors border border-[#243324]"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">{error}</div>
-      )}
-
-      {/* ── KPI cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard title="Receitas"
-          value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
-          icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
-          color="border-emerald-500/20 bg-emerald-500/5" />
-        <KpiCard title="Despesas"
-          value={loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}
-          icon={<TrendingDown className="w-4 h-4 text-red-400" />}
-          color="border-red-500/20 bg-red-500/5" />
-        <KpiCard title="Saldo"
-          value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}
-          icon={<Wallet className="w-4 h-4 text-blue-400" />}
-          color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`} />
-        <KpiCard title="Margem"
-          value={loading ? '...' : `${resumo?.margemLucro ?? 0}%`}
-          icon={<BarChart2 className="w-4 h-4 text-purple-400" />}
-          color="border-purple-500/20 bg-purple-500/5"
-          sub="Margem de lucro" />
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
-        <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
-      </div>
-
-      {/* ── Lançamentos ── */}
-      {propriedadeId ? (
-        <CrudPage
-          title="Lançamentos"
-          endpoint="/financeiro"
-          fields={fields}
-          icon={<DollarSign className="w-8 h-8 text-green-400" />}
-          fazendaId={propriedadeId}
-          safraId={safraId || undefined}
-        />
-      ) : (
-        <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-8 text-center">
-          <DollarSign className="w-8 h-8 mx-auto mb-3 text-gray-600" />
-          <p className="text-sm text-gray-500">Selecione uma propriedade para ver os lançamentos</p>
-        </div>
-      )}
-
     </div>
   )
 }
