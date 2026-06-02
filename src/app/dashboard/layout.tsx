@@ -19,8 +19,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (u) setUser(JSON.parse(u))
   }, [router])
 
-  return (
+ return (
+  <SafraProvider>
     <div className="flex flex-col min-h-screen bg-[#0a0f0a]">
+      {/* ... todo o conteúdo existente ... */}
+    </div>
+  </SafraProvider>
+)
 
       {/* ── Header ── */}
       <header className="h-24 bg-[#0d160d] border-b border-[#1a251a] flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-30 w-full">
