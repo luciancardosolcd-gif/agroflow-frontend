@@ -52,7 +52,6 @@ export default function FinanceiroPage() {
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
 
-  // ✅ pega propriedadeId e safraId do contexto global
   const { propriedadeId, safraId } = useSafraContext()
 
   const { data, loading, error, refetch } = useDashboardFinanceiro(
@@ -135,15 +134,22 @@ export default function FinanceiroPage() {
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── CrudPage com filtro de fazenda ── */}
-      <CrudPage
-        title="Lançamentos"
-        endpoint="/financeiro"
-        fields={fields}
-        icon={<DollarSign className="w-8 h-8 text-green-400" />}
-       fazendaId={propriedadeId && propriedadeId !== '' ? propriedadeId : 'none'}
-        safraId={safraId || undefined}
-      />
+      {/* ── Lançamentos ── */}
+      {propriedadeId ? (
+        <CrudPage
+          title="Lançamentos"
+          endpoint="/financeiro"
+          fields={fields}
+          icon={<DollarSign className="w-8 h-8 text-green-400" />}
+          fazendaId={propriedadeId}
+          safraId={safraId || undefined}
+        />
+      ) : (
+        <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-8 text-center">
+          <DollarSign className="w-8 h-8 mx-auto mb-3 text-gray-600" />
+          <p className="text-sm text-gray-500">Selecione uma propriedade para ver os lançamentos</p>
+        </div>
+      )}
 
     </div>
   )
