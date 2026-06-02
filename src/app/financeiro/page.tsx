@@ -1,5 +1,9 @@
 'use client'
 import { useSafraContext } from '@/lib/SafraContext'
+const { propriedadeId, safraId } = useSafraContext()
+console.log('🌱 propriedadeId:', propriedadeId, '| safraId:', safraId) // ← ADICIONE AQUI
+
+const { data, loading, error, refetch } = useDashboardFinanceiro(
 import { useState, useEffect } from 'react'
 import Cookies from 'js-cookie'
 import {
