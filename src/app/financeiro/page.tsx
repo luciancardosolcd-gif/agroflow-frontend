@@ -85,7 +85,7 @@ export default function FinanceiroPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">Financeiro</h1>
-            <p className="text-xs text-gray-400">Lançamentos de receitas e despesas</p>
+            <p className="text-xs text-gray-400">Lançamentos de receitas e despesas.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
