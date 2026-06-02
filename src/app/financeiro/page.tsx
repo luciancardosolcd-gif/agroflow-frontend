@@ -141,7 +141,7 @@ export default function FinanceiroPage() {
         endpoint="/financeiro"
         fields={fields}
         icon={<DollarSign className="w-8 h-8 text-green-400" />}
-        fazendaId={propriedadeId || undefined}
+       fazendaId={propriedadeId && propriedadeId !== '' ? propriedadeId : 'none'}
         safraId={safraId || undefined}
       />
 
