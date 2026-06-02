@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import Cookies from 'js-cookie'
@@ -29,9 +29,23 @@ export default function CrudPage({
   const [items, setItems] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [perfil, setPerfil] = useState('')
-  const [permissoes, setPermissoes] = useState<Record<string, any>>({})
 
+  // ── CORREÇÃO 1: inicializa perfil/permissões direto do cookie (síncrono) ──
+  // Evita renderização sem permissões e o botão "Novo" desaparecendo
+  const [perfil, setPerfil] = useState<string>(() => {
+    try {
+      const u = Cookies.get('user')
+      return u ? JSON.parse(u).perfil || '' : ''
+    } catch { return '' }
+  })
+  const [permissoes, setPermissoes] = useState<Record<string, any>>(() => {
+    try {
+      const u = Cookies.get('user')
+      return u ? JSON.parse(u).permissoes || {} : {}
+    } catch { return {} }
+  })
+
+  // Mantém atualizado caso o cookie mude
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
@@ -41,22 +55,15 @@ export default function CrudPage({
     }
   }, [])
 
-  useEffect(() => {
-    if (fazendaId !== undefined) {
-      setItems([])
-      if (fazendaId !== '') load()
-    }
-  }, [endpoint, fazendaId, safraId])
-
   const getModulo = () => {
-    if (endpoint.includes('financeiro')) return 'financeiro'
-    if (endpoint.includes('clientes')) return 'clientes'
-    if (endpoint.includes('contratos')) return 'contratos'
-    if (endpoint.includes('estoque')) return 'estoque'
-    if (endpoint.includes('fornecedores')) return 'fornecedores'
+    if (endpoint.includes('financeiro'))  return 'financeiro'
+    if (endpoint.includes('clientes'))    return 'clientes'
+    if (endpoint.includes('contratos'))   return 'contratos'
+    if (endpoint.includes('estoque'))     return 'estoque'
+    if (endpoint.includes('fornecedores'))return 'fornecedores'
     if (endpoint.includes('maquinarios')) return 'maquinarios'
-    if (endpoint.includes('documentos')) return 'documentos'
-    if (endpoint.includes('produtor')) return 'produtor'
+    if (endpoint.includes('documentos'))  return 'documentos'
+    if (endpoint.includes('produtor'))    return 'produtor'
     return null
   }
 
@@ -70,23 +77,34 @@ export default function CrudPage({
 
   const isFinanceiro = endpoint.includes('financeiro')
 
-  const buildUrl = () => {
+  // ── CORREÇÃO 2: buildUrl e load em useCallback com dependências corretas ──
+  // Garante que ao trocar de fazenda o load() use o fazendaId novo
+  const buildUrl = useCallback(() => {
     let url = endpoint
     const params: string[] = []
     if (fazendaId) params.push(`fazendaId=${fazendaId}`)
     if (safraId)   params.push(`safraId=${safraId}`)
     if (params.length > 0) url += `?${params.join('&')}`
     return url
-  }
+  }, [endpoint, fazendaId, safraId])
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true)
     try {
       const { data } = await api.get(buildUrl())
       setItems(Array.isArray(data) ? data : [])
     } catch { setItems([]) }
     finally { setLoading(false) }
-  }
+  }, [buildUrl])
+
+  // ── CORREÇÃO 3: useEffect depende de `load` (que já engloba fazendaId/safraId) ──
+  useEffect(() => {
+    if (fazendaId !== undefined) {
+      setItems([])
+      if (fazendaId !== '') load()
+      else setLoading(false)
+    }
+  }, [load, fazendaId])
 
   const handleNew = () => {
     if (isFinanceiro) router.push('/financeiro/novo')
@@ -123,9 +141,9 @@ export default function CrudPage({
 
     if (f.key === 'status') {
       const colors: Record<string, string> = {
-        pago:       'bg-green-500/20 text-green-400',
-        pendente:   'bg-yellow-500/20 text-yellow-400',
-        'Em Aberto':'bg-blue-500/20 text-blue-400',
+        pago:        'bg-green-500/20 text-green-400',
+        pendente:    'bg-yellow-500/20 text-yellow-400',
+        'Em Aberto': 'bg-blue-500/20 text-blue-400',
       }
       return (
         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[val] || 'bg-gray-500/20 text-gray-400'}`}>
