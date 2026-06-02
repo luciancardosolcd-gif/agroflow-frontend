@@ -1,13 +1,5 @@
 'use client'
 import { useSafraContext } from '@/lib/SafraContext'
-const { propriedadeId, safraId } = useSafraContext()
-console.log('🌱 propriedadeId:', propriedadeId) // ← ESTA LINHA ESTÁ FALTANDO
-
-const { data, loading, error, refetch } = useDashboardFinanceiro(
-const { propriedadeId, safraId } = useSafraContext()
-console.log('🌱 propriedadeId:', propriedadeId, '| safraId:', safraId) // ← ADICIONE AQUI
-
-const { data, loading, error, refetch } = useDashboardFinanceiro(
 import { useState, useEffect } from 'react'
 import Cookies from 'js-cookie'
 import {
@@ -61,6 +53,7 @@ export default function FinanceiroPage() {
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
 
   const { propriedadeId, safraId } = useSafraContext()
+  console.log('🌱 propriedadeId:', propriedadeId, '| safraId:', safraId)
 
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
