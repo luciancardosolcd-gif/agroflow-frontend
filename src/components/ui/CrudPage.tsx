@@ -18,8 +18,8 @@ interface CrudPageProps {
   endpoint: string
   fields: FieldDef[]
   icon: React.ReactNode
-  fazendaId?: string  // ✅ novo prop opcional
-  safraId?: string    // ✅ novo prop opcional
+  fazendaId?: string
+  safraId?: string
 }
 
 export default function CrudPage({
@@ -63,7 +63,6 @@ export default function CrudPage({
 
   const isFinanceiro = endpoint.includes('financeiro')
 
-  // ✅ FIX: inclui fazendaId e safraId na requisição
   const buildUrl = () => {
     let url = endpoint
     const params: string[] = []
@@ -82,8 +81,10 @@ export default function CrudPage({
     finally { setLoading(false) }
   }
 
-  // ✅ recarrega quando fazendaId ou safraId mudam
-  useEffect(() => { load() }, [endpoint, fazendaId, safraId])
+  // ✅ CORREÇÃO: só carrega quando fazendaId estiver definido
+  useEffect(() => {
+    if (fazendaId !== undefined) load()
+  }, [endpoint, fazendaId, safraId])
 
   const handleNew = () => {
     if (isFinanceiro) router.push('/financeiro/novo')
