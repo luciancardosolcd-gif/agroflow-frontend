@@ -40,4 +40,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="text-sm text-green-200 font-medium">{user.nome}</div>
                   <div className="text-xs text-green-600 capitalize">{user.perfil}</div>
                 </div>
-                <div className="w-9 h-9 bg-green-800 rounded-lg flex items-center justify-center text
+                <div className="w-9 h-9 bg-green-800 rounded-lg flex items-center justify-center text-green-200 font-semibold text-sm">
+                  {user.nome.charAt(0).toUpperCase()}
+                </div>
+              </div>
+            )}
+          </div>
+        </header>
+        <main className="flex-1 p-6 overflow-auto">
+          {children}
+        </main>
+      </div>
+    </div>
+  )
+}
