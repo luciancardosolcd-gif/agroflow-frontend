@@ -1,4 +1,5 @@
 'use client'
+import { SafraProvider } from '@/lib/SafraContext'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
