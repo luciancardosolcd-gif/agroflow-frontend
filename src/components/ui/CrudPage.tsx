@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import Cookies from 'js-cookie'
@@ -27,84 +27,90 @@ export default function CrudPage({
 }: CrudPageProps) {
   const router = useRouter()
   const [items, setItems] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
 
-  // ── CORREÇÃO 1: inicializa perfil/permissões direto do cookie (síncrono) ──
-  // Evita renderização sem permissões e o botão "Novo" desaparecendo
   const [perfil, setPerfil] = useState<string>(() => {
-    try {
-      const u = Cookies.get('user')
-      return u ? JSON.parse(u).perfil || '' : ''
-    } catch { return '' }
+    try { const u = Cookies.get('user'); return u ? JSON.parse(u).perfil || '' : '' }
+    catch { return '' }
   })
   const [permissoes, setPermissoes] = useState<Record<string, any>>(() => {
-    try {
-      const u = Cookies.get('user')
-      return u ? JSON.parse(u).permissoes || {} : {}
-    } catch { return {} }
+    try { const u = Cookies.get('user'); return u ? JSON.parse(u).permissoes || {} : {} }
+    catch { return {} }
   })
 
-  // Mantém atualizado caso o cookie mude
   useEffect(() => {
-    const u = Cookies.get('user')
-    if (u) {
-      const parsed = JSON.parse(u)
-      setPerfil(parsed.perfil || '')
-      setPermissoes(parsed.permissoes || {})
-    }
+    try {
+      const u = Cookies.get('user')
+      if (u) {
+        const parsed = JSON.parse(u)
+        setPerfil(parsed.perfil || '')
+        setPermissoes(parsed.permissoes || {})
+      }
+    } catch {}
   }, [])
 
   const getModulo = () => {
-    if (endpoint.includes('financeiro'))  return 'financeiro'
-    if (endpoint.includes('clientes'))    return 'clientes'
-    if (endpoint.includes('contratos'))   return 'contratos'
-    if (endpoint.includes('estoque'))     return 'estoque'
-    if (endpoint.includes('fornecedores'))return 'fornecedores'
-    if (endpoint.includes('maquinarios')) return 'maquinarios'
-    if (endpoint.includes('documentos'))  return 'documentos'
-    if (endpoint.includes('produtor'))    return 'produtor'
+    if (endpoint.includes('financeiro'))   return 'financeiro'
+    if (endpoint.includes('clientes'))     return 'clientes'
+    if (endpoint.includes('contratos'))    return 'contratos'
+    if (endpoint.includes('estoque'))      return 'estoque'
+    if (endpoint.includes('fornecedores')) return 'fornecedores'
+    if (endpoint.includes('maquinarios'))  return 'maquinarios'
+    if (endpoint.includes('documentos'))   return 'documentos'
+    if (endpoint.includes('produtor'))     return 'produtor'
     return null
   }
 
-  const modulo = getModulo()
+  const modulo  = getModulo()
   const isAdmin = perfil === 'admin'
-  const perm = modulo ? (permissoes[modulo] || {}) : {}
+  const perm    = modulo ? (permissoes[modulo] || {}) : {}
 
-  const canCreate = isAdmin || perm.criar === true
-  const canEdit   = isAdmin || perm.editar === true
+  const canCreate = isAdmin || perm.criar   === true
+  const canEdit   = isAdmin || perm.editar  === true
   const canDelete = isAdmin || perm.deletar === true
 
   const isFinanceiro = endpoint.includes('financeiro')
 
-  // ── CORREÇÃO 2: buildUrl e load em useCallback com dependências corretas ──
-  // Garante que ao trocar de fazenda o load() use o fazendaId novo
-  const buildUrl = useCallback(() => {
-    let url = endpoint
-    const params: string[] = []
-    if (fazendaId) params.push(`fazendaId=${fazendaId}`)
-    if (safraId)   params.push(`safraId=${safraId}`)
-    if (params.length > 0) url += `?${params.join('&')}`
-    return url
-  }, [endpoint, fazendaId, safraId])
+  // Usa refs para sempre ter os valores mais recentes
+  const fazendaRef  = useRef(fazendaId)
+  const safraRef    = useRef(safraId)
+  const endpointRef = useRef(endpoint)
+  fazendaRef.current  = fazendaId
+  safraRef.current    = safraId
+  endpointRef.current = endpoint
 
-  const load = useCallback(async () => {
+  const load = async () => {
+    const fId = fazendaRef.current
+    const sId = safraRef.current
+    const ep  = endpointRef.current
+
+    let url = ep
+    const params: string[] = []
+    if (fId && fId !== '') params.push(`fazendaId=${fId}`)
+    if (sId && sId !== '') params.push(`safraId=${sId}`)
+    if (params.length > 0) url += `?${params.join('&')}`
+
+    console.log('📡 CrudPage load URL:', url)
+
     setLoading(true)
     try {
-      const { data } = await api.get(buildUrl())
+      const { data } = await api.get(url)
       setItems(Array.isArray(data) ? data : [])
-    } catch { setItems([]) }
-    finally { setLoading(false) }
-  }, [buildUrl])
-
-  // ── CORREÇÃO 3: useEffect depende de `load` (que já engloba fazendaId/safraId) ──
-  useEffect(() => {
-    if (fazendaId !== undefined) {
+    } catch (e) {
+      console.error('❌ CrudPage load error:', e)
       setItems([])
-      if (fazendaId !== '') load()
-      else setLoading(false)
+    } finally {
+      setLoading(false)
     }
-  }, [load, fazendaId])
+  }
+
+  // ── CORREÇÃO: dispara load SEMPRE que fazendaId ou safraId mudam
+  // Inclusive na montagem inicial (sem fazenda = busca todos)
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fazendaId, safraId, endpoint])
 
   const handleNew = () => {
     if (isFinanceiro) router.push('/financeiro/novo')
