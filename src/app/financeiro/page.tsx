@@ -110,7 +110,6 @@ export default function FinanceiroPage() {
             className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-          {/* ── Botão Novo sempre visível ── */}
           {canCreate && (
             <button
               onClick={() => router.push('/financeiro/novo')}
@@ -153,8 +152,9 @@ export default function FinanceiroPage() {
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── Lançamentos: sempre renderiza CrudPage, com ou sem fazenda ── */}
+      {/* ── Lançamentos ── */}
       <CrudPage
+        key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
         endpoint="/financeiro"
         fields={fields}
