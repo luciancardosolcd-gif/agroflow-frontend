@@ -1,10 +1,11 @@
 'use client'
 import { useSafraContext } from '@/lib/SafraContext'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import {
   DollarSign, TrendingUp, TrendingDown,
-  Wallet, BarChart2, RefreshCw
+  Wallet, BarChart2, RefreshCw, Plus
 } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import SemPermissao from '@/components/ui/SemPermissao'
@@ -49,11 +50,12 @@ const fields = [
 ]
 
 export default function FinanceiroPage() {
+  const router = useRouter()
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
+  const [canCreate, setCanCreate] = useState(false)
 
   const { propriedadeId, safraId } = useSafraContext()
-  console.log('🌱 propriedadeId:', propriedadeId, '| safraId:', safraId)
 
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
@@ -65,9 +67,15 @@ export default function FinanceiroPage() {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      if (parsed.perfil === 'admin') { setAutorizado(true); return }
+      const isAdmin = parsed.perfil === 'admin'
       const perm = parsed.permissoes || {}
-      if (perm?.financeiro?.ver === true) { setAutorizado(true) } else { setAutorizado(false) }
+      const podeCriar = isAdmin || perm?.financeiro?.criar === true
+      const podeVer   = isAdmin || perm?.financeiro?.ver   === true
+
+      setCanCreate(podeCriar)
+
+      if (isAdmin || podeVer) { setAutorizado(true) }
+      else { setAutorizado(false) }
     }
   }, [])
 
@@ -102,6 +110,16 @@ export default function FinanceiroPage() {
             className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
+          {/* ── Botão Novo sempre visível ── */}
+          {canCreate && (
+            <button
+              onClick={() => router.push('/financeiro/novo')}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-xl transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Novo
+            </button>
+          )}
         </div>
       </div>
 
@@ -135,22 +153,15 @@ export default function FinanceiroPage() {
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── Lançamentos ── */}
-      {propriedadeId ? (
-        <CrudPage
-          title="Lançamentos"
-          endpoint="/financeiro"
-          fields={fields}
-          icon={<DollarSign className="w-8 h-8 text-green-400" />}
-          fazendaId={propriedadeId}
-          safraId={safraId || undefined}
-        />
-      ) : (
-        <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-8 text-center">
-          <DollarSign className="w-8 h-8 mx-auto mb-3 text-gray-600" />
-          <p className="text-sm text-gray-500">Selecione uma propriedade para ver os lançamentos</p>
-        </div>
-      )}
+      {/* ── Lançamentos: sempre renderiza CrudPage, com ou sem fazenda ── */}
+      <CrudPage
+        title="Lançamentos"
+        endpoint="/financeiro"
+        fields={fields}
+        icon={<DollarSign className="w-8 h-8 text-green-400" />}
+        fazendaId={propriedadeId || ''}
+        safraId={safraId || undefined}
+      />
 
     </div>
   )
