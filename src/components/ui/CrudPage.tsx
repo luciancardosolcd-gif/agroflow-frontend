@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
 import Cookies from 'js-cookie'
@@ -72,45 +72,29 @@ export default function CrudPage({
 
   const isFinanceiro = endpoint.includes('financeiro')
 
-  // Usa refs para sempre ter os valores mais recentes
-  const fazendaRef  = useRef(fazendaId)
-  const safraRef    = useRef(safraId)
-  const endpointRef = useRef(endpoint)
-  fazendaRef.current  = fazendaId
-  safraRef.current    = safraId
-  endpointRef.current = endpoint
-
-  const load = async () => {
-    const fId = fazendaRef.current
-    const sId = safraRef.current
-    const ep  = endpointRef.current
-
-    let url = ep
+  // ── load com todas as dependências explícitas ──
+  const load = useCallback(async () => {
+    let url = endpoint
     const params: string[] = []
-    if (fId && fId !== '') params.push(`fazendaId=${fId}`)
-    if (sId && sId !== '') params.push(`safraId=${sId}`)
+    if (fazendaId && fazendaId !== '') params.push(`fazendaId=${fazendaId}`)
+    if (safraId   && safraId   !== '') params.push(`safraId=${safraId}`)
     if (params.length > 0) url += `?${params.join('&')}`
-
-    console.log('📡 CrudPage load URL:', url)
 
     setLoading(true)
     try {
       const { data } = await api.get(url)
       setItems(Array.isArray(data) ? data : [])
-    } catch (e) {
-      console.error('❌ CrudPage load error:', e)
+    } catch {
       setItems([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [endpoint, fazendaId, safraId]) // ← todas as dependências aqui
 
-  // ── CORREÇÃO: dispara load SEMPRE que fazendaId ou safraId mudam
-  // Inclusive na montagem inicial (sem fazenda = busca todos)
+  // ── re-executa toda vez que fazendaId, safraId ou endpoint mudam ──
   useEffect(() => {
     load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fazendaId, safraId, endpoint])
+  }, [load])
 
   const handleNew = () => {
     if (isFinanceiro) router.push('/financeiro/novo')
