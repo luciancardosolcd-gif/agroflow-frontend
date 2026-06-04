@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import api from '@/lib/api'
@@ -13,22 +13,19 @@ import SemPermissao from '@/components/ui/SemPermissao'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
 import FinanceiroTabs from '@/components/FinanceiroTabs'
 
-// ── Tipos ──────────────────────────────────────────────────────────────────
 interface Propriedade { id: string; nome: string }
 interface Safra       { id: string; nome: string; propriedadeId?: string }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
 const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
-  { value: 'MES_ATUAL',    label: 'Mês Atual'   },
+  { value: 'MES_ATUAL',    label: 'Mês Atual'    },
   { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
   { value: 'TRIMESTRE',    label: 'Trimestre'    },
   { value: 'ANO_ATUAL',    label: 'Ano Atual'    },
 ]
 
-// ── KpiCard ────────────────────────────────────────────────────────────────
 function KpiCard({ title, value, icon, color, sub }: {
   title: string; value: string; icon: React.ReactNode; color: string; sub?: string
 }) {
@@ -46,7 +43,6 @@ function KpiCard({ title, value, icon, color, sub }: {
   )
 }
 
-// ── Fields ─────────────────────────────────────────────────────────────────
 const fields = [
   { key: 'descricao',      label: 'Descrição',      required: true },
   { key: 'valor',          label: 'Valor',           type: 'number' },
@@ -57,31 +53,30 @@ const fields = [
   { key: 'observacao',     label: 'Observação' },
 ]
 
-// ── Page ───────────────────────────────────────────────────────────────────
 export default function FinanceiroPage() {
   const router = useRouter()
 
-  // ── auth ──
+  // auth
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const [canCreate,  setCanCreate]  = useState(false)
 
-  // ── período KPI ──
+  // period for KPIs
   const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
 
-  // ── seletor LOCAL de fazenda / safra ──
-  const [propriedades,     setPropriedades]     = useState<Propriedade[]>([])
-  const [safras,           setSafras]           = useState<Safra[]>([])
-  const [safrasFiltradas,  setSafrasFiltradas]  = useState<Safra[]>([])
-  const [propriedadeId,    setPropriedadeId]    = useState('')
-  const [safraId,          setSafraId]          = useState('')
+  // LOCAL farm/harvest selector — no dependency on SafraContext
+  const [propriedades,    setPropriedades]    = useState<Propriedade[]>([])
+  const [safras,          setSafras]          = useState<Safra[]>([])
+  const [safrasFiltradas, setSafrasFiltradas] = useState<Safra[]>([])
+  const [propriedadeId,   setPropriedadeId]   = useState('')
+  const [safraId,         setSafraId]         = useState('')
 
-  // carrega listas uma vez
+  // Load lists once
   useEffect(() => {
     api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
     api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
   }, [])
 
-  // filtra safras quando muda a fazenda
+  // Filter harvests when farm changes
   useEffect(() => {
     if (propriedadeId) {
       setSafrasFiltradas(safras.filter(s => s.propriedadeId === propriedadeId))
@@ -91,20 +86,20 @@ export default function FinanceiroPage() {
     setSafraId('')
   }, [propriedadeId, safras])
 
-  // ── KPIs ──
+  // KPIs
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
   )
-  const resumo     = data?.resumo
+  const resumo      = data?.resumo
   const lancamentos = data?.lancamentosRecentes ?? []
 
-  // ── permissões ──
+  // Permissions
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      const isAdmin  = parsed.perfil === 'admin'
-      const perm     = parsed.permissoes || {}
+      const isAdmin = parsed.perfil === 'admin'
+      const perm    = parsed.permissoes || {}
       setCanCreate(isAdmin || perm?.financeiro?.criar === true)
       setAutorizado(isAdmin || perm?.financeiro?.ver === true ? true : false)
     }
@@ -130,7 +125,7 @@ export default function FinanceiroPage() {
 
         <div className="flex items-center gap-2 flex-wrap">
 
-          {/* ── Seletor de fazenda LOCAL ── */}
+          {/* LOCAL farm selector */}
           {propriedades.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
               <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -148,7 +143,7 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {/* ── Seletor de safra LOCAL ── */}
+          {/* LOCAL harvest selector */}
           {safrasFiltradas.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
               <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -166,7 +161,7 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {/* ── Período KPI ── */}
+          {/* KPI period */}
           <select
             value={periodo}
             onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
@@ -228,7 +223,7 @@ export default function FinanceiroPage() {
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── Lançamentos — key muda quando fazenda/safra mudam → remonta o CrudPage ── */}
+      {/* ── Lancamentos — key changes when farm/harvest change → remounts CrudPage ── */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
