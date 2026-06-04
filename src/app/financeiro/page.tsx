@@ -1,27 +1,34 @@
 'use client'
-import { useSafraContext } from '@/lib/SafraContext'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
+import api from '@/lib/api'
 import {
   DollarSign, TrendingUp, TrendingDown,
-  Wallet, BarChart2, RefreshCw, Plus
+  Wallet, BarChart2, RefreshCw, Plus,
+  MapPin, Sprout, ChevronDown
 } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import SemPermissao from '@/components/ui/SemPermissao'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
 import FinanceiroTabs from '@/components/FinanceiroTabs'
 
+// ── Tipos ──────────────────────────────────────────────────────────────────
+interface Propriedade { id: string; nome: string }
+interface Safra       { id: string; nome: string; propriedadeId?: string }
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
 const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
-  { value: 'MES_ATUAL',    label: 'Mês Atual' },
+  { value: 'MES_ATUAL',    label: 'Mês Atual'   },
   { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
-  { value: 'TRIMESTRE',    label: 'Trimestre' },
-  { value: 'ANO_ATUAL',    label: 'Ano Atual' },
+  { value: 'TRIMESTRE',    label: 'Trimestre'    },
+  { value: 'ANO_ATUAL',    label: 'Ano Atual'    },
 ]
 
+// ── KpiCard ────────────────────────────────────────────────────────────────
 function KpiCard({ title, value, icon, color, sub }: {
   title: string; value: string; icon: React.ReactNode; color: string; sub?: string
 }) {
@@ -39,6 +46,7 @@ function KpiCard({ title, value, icon, color, sub }: {
   )
 }
 
+// ── Fields ─────────────────────────────────────────────────────────────────
 const fields = [
   { key: 'descricao',      label: 'Descrição',      required: true },
   { key: 'valor',          label: 'Valor',           type: 'number' },
@@ -49,38 +57,61 @@ const fields = [
   { key: 'observacao',     label: 'Observação' },
 ]
 
+// ── Page ───────────────────────────────────────────────────────────────────
 export default function FinanceiroPage() {
   const router = useRouter()
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
+
+  // ── auth ──
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
-  const [canCreate, setCanCreate] = useState(false)
+  const [canCreate,  setCanCreate]  = useState(false)
 
-  const { propriedadeId, safraId } = useSafraContext()
+  // ── período KPI ──
+  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
 
+  // ── seletor LOCAL de fazenda / safra ──
+  const [propriedades,     setPropriedades]     = useState<Propriedade[]>([])
+  const [safras,           setSafras]           = useState<Safra[]>([])
+  const [safrasFiltradas,  setSafrasFiltradas]  = useState<Safra[]>([])
+  const [propriedadeId,    setPropriedadeId]    = useState('')
+  const [safraId,          setSafraId]          = useState('')
+
+  // carrega listas uma vez
+  useEffect(() => {
+    api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
+    api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
+  }, [])
+
+  // filtra safras quando muda a fazenda
+  useEffect(() => {
+    if (propriedadeId) {
+      setSafrasFiltradas(safras.filter(s => s.propriedadeId === propriedadeId))
+    } else {
+      setSafrasFiltradas(safras)
+    }
+    setSafraId('')
+  }, [propriedadeId, safras])
+
+  // ── KPIs ──
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
   )
-  const resumo = data?.resumo
+  const resumo     = data?.resumo
   const lancamentos = data?.lancamentosRecentes ?? []
 
+  // ── permissões ──
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      const isAdmin = parsed.perfil === 'admin'
-      const perm = parsed.permissoes || {}
-      const podeCriar = isAdmin || perm?.financeiro?.criar === true
-      const podeVer   = isAdmin || perm?.financeiro?.ver   === true
-
-      setCanCreate(podeCriar)
-
-      if (isAdmin || podeVer) { setAutorizado(true) }
-      else { setAutorizado(false) }
+      const isAdmin  = parsed.perfil === 'admin'
+      const perm     = parsed.permissoes || {}
+      setCanCreate(isAdmin || perm?.financeiro?.criar === true)
+      setAutorizado(isAdmin || perm?.financeiro?.ver === true ? true : false)
     }
   }, [])
 
   if (autorizado === null) return null
-  if (!autorizado) return <SemPermissao />
+  if (!autorizado)         return <SemPermissao />
 
   return (
     <div className="space-y-5">
@@ -96,7 +127,46 @@ export default function FinanceiroPage() {
             <p className="text-xs text-gray-400">Lançamentos de receitas e despesas.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 flex-wrap">
+
+          {/* ── Seletor de fazenda LOCAL ── */}
+          {propriedades.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
+              <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+              <select
+                value={propriedadeId}
+                onChange={e => setPropriedadeId(e.target.value)}
+                className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[140px]"
+              >
+                <option value="">Todas propriedades</option>
+                {propriedades.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            </div>
+          )}
+
+          {/* ── Seletor de safra LOCAL ── */}
+          {safrasFiltradas.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
+              <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+              <select
+                value={safraId}
+                onChange={e => setSafraId(e.target.value)}
+                className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[120px]"
+              >
+                <option value="">Todas safras</option>
+                {safrasFiltradas.map(s => (
+                  <option key={s.id} value={s.id}>{s.nome}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            </div>
+          )}
+
+          {/* ── Período KPI ── */}
           <select
             value={periodo}
             onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
@@ -106,10 +176,14 @@ export default function FinanceiroPage() {
               <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
             ))}
           </select>
-          <button onClick={refetch}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors">
+
+          <button
+            onClick={refetch}
+            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
+          >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
+
           {canCreate && (
             <button
               onClick={() => router.push('/financeiro/novo')}
@@ -123,7 +197,9 @@ export default function FinanceiroPage() {
       </div>
 
       {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">{error}</div>
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
+          {error}
+        </div>
       )}
 
       {/* ── KPI cards ── */}
@@ -152,7 +228,7 @@ export default function FinanceiroPage() {
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── Lançamentos ── */}
+      {/* ── Lançamentos — key muda quando fazenda/safra mudam → remonta o CrudPage ── */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
