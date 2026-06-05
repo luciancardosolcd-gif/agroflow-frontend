@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Save, DollarSign, Calendar, Tag, FileText, TrendingUp, TrendingDown, CheckCircle, Clock, AlertCircle, MapPin, Sprout } from 'lucide-react'
 import api from '@/lib/api'
@@ -8,7 +8,7 @@ import Cookies from 'js-cookie'
 import { usePropriedade } from '@/contexts/PropriedadeContext'
 
 interface LancamentoPageProps {
-  id?: string // se vier id, é edição
+  id?: string
 }
 
 const STATUS_OPTIONS = [
@@ -17,22 +17,18 @@ const STATUS_OPTIONS = [
   { value: 'Em Aberto', label: 'Em Aberto', icon: AlertCircle, color: 'text-blue-400 bg-blue-400/10 border-blue-400/30' },
 ]
 
-export default function LancamentoPage({ id }: LancamentoPageProps) {
+// ── Componente interno que usa useSearchParams ──
+function LancamentoPageInner({ id }: LancamentoPageProps) {
   const router       = useRouter()
   const searchParams = useSearchParams()
   const isEdit       = !!id
 
-  // ── Contexto global de propriedade ──
   const {
     propriedades, safrasFiltradas,
     propriedadeId: ctxPropriedadeId,
     safraId:       ctxSafraId,
   } = usePropriedade()
 
-  // Resolve fazendaId e safraId:
-  // 1. URL params (vindo do botão "Novo" na listagem)
-  // 2. Contexto global (seleção persistida)
-  // 3. Vazio (sem filtro)
   const [fazendaId, setFazendaId] = useState(
     searchParams.get('fazendaId') || ctxPropriedadeId || ''
   )
@@ -46,13 +42,13 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
   const [error,   setError]   = useState('')
 
   const [form, setForm] = useState({
-    descricao:            '',
-    valor:                '',
-    tipo:                 'DESPESA' as 'RECEITA' | 'DESPESA',
-    data:                 new Date().toISOString().split('T')[0],
-    dataVencimento:       '',
-    status:               'pendente',
-    observacao:           '',
+    descricao:             '',
+    valor:                 '',
+    tipo:                  'DESPESA' as 'RECEITA' | 'DESPESA',
+    data:                  new Date().toISOString().split('T')[0],
+    dataVencimento:        '',
+    status:                'pendente',
+    observacao:            '',
     financial_category_id: '',
   })
 
@@ -65,16 +61,15 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         .then(r => {
           const d = r.data
           setForm({
-            descricao:            d.descricao || '',
-            valor:                String(d.valor || ''),
-            tipo:                 d.tipo || 'DESPESA',
-            data:                 d.data ? d.data.split('T')[0] : '',
-            dataVencimento:       d.dataVencimento ? d.dataVencimento.split('T')[0] : '',
-            status:               d.status || 'pendente',
-            observacao:           d.observacao || '',
+            descricao:             d.descricao || '',
+            valor:                 String(d.valor || ''),
+            tipo:                  d.tipo || 'DESPESA',
+            data:                  d.data ? d.data.split('T')[0] : '',
+            dataVencimento:        d.dataVencimento ? d.dataVencimento.split('T')[0] : '',
+            status:                d.status || 'pendente',
+            observacao:            d.observacao || '',
             financial_category_id: d.financial_category_id || '',
           })
-          // Ao editar, preenche fazendaId/safraId do próprio registro
           if (d.fazendaId) setFazendaId(d.fazendaId)
           if (d.safraId)   setSafraId(d.safraId)
         })
@@ -98,7 +93,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         ...form,
         valor: parseFloat(form.valor.replace(',', '.')),
         financial_category_id: form.financial_category_id || null,
-        // ── CAMPOS QUE FALTAVAM ──
         fazendaId: fazendaId || null,
         safraId:   safraId   || null,
       }
@@ -116,7 +110,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
     }
   }
 
-  // Nome legível da propriedade selecionada
   const propriedadeNome = propriedades.find(p => p.id === fazendaId)?.nome
   const safraNome       = safrasFiltradas.find(s => s.id === safraId)?.nome
 
@@ -130,7 +123,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
 
   return (
     <div className="min-h-screen bg-[#0a0f0a]">
-      {/* ── Header fixo ── */}
       <div className="sticky top-0 z-10 bg-[#0d120d]/95 backdrop-blur border-b border-[#1e2e1e] px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
@@ -144,7 +136,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           <h1 className="text-white font-semibold text-lg">
             {isEdit ? 'Editar Lançamento' : 'Novo Lançamento'}
           </h1>
-          {/* Badge da propriedade/safra ativa */}
           {propriedadeNome && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-900/30 border border-green-800/40 text-xs text-green-400">
               <MapPin className="w-3 h-3" />
@@ -181,7 +172,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         </div>
       </div>
 
-      {/* ── Conteúdo ── */}
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
 
         {error && (
@@ -190,7 +180,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         )}
 
-        {/* ── Propriedade / Safra ── */}
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-4">
           <p className="text-xs text-green-700 uppercase tracking-widest">Vínculo da propriedade</p>
           <div className="grid grid-cols-2 gap-4">
@@ -230,7 +219,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         </div>
 
-        {/* ── Tipo de operação ── */}
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6">
           <p className="text-xs text-green-700 uppercase tracking-widest mb-4">Tipo de operação financeira</p>
           <div className="grid grid-cols-2 gap-3">
@@ -256,7 +244,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         </div>
 
-        {/* ── Informações gerais ── */}
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-5">
           <p className="text-xs text-green-700 uppercase tracking-widest">Informações gerais</p>
 
@@ -313,7 +300,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         </div>
 
-        {/* ── Valores ── */}
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-5">
           <p className="text-xs text-green-700 uppercase tracking-widest">Valores</p>
 
@@ -355,10 +341,8 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         </div>
 
-        {/* ── Classificação ── */}
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-4">
           <p className="text-xs text-green-700 uppercase tracking-widest">Classificação</p>
-
           <div>
             <label className="text-green-400 text-sm font-medium block mb-2">
               <Tag className="w-3.5 h-3.5 inline mr-1.5" />
@@ -381,7 +365,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         </div>
 
-        {/* Botão salvar inferior */}
         <div className="flex gap-3 pt-2 pb-8">
           <button
             onClick={() => router.push('/financeiro')}
@@ -403,5 +386,18 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         </div>
       </div>
     </div>
+  )
+}
+
+// ── Export com Suspense obrigatório pelo Next.js ──
+export default function LancamentoPage({ id }: LancamentoPageProps) {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen bg-[#0a0f0a]">
+        <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <LancamentoPageInner id={id} />
+    </Suspense>
   )
 }
