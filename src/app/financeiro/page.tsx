@@ -1,8 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
-import api from '@/lib/api'
 import {
   DollarSign, TrendingUp, TrendingDown,
   Wallet, BarChart2, RefreshCw, Plus,
@@ -12,9 +11,7 @@ import CrudPage from '@/components/ui/CrudPage'
 import SemPermissao from '@/components/ui/SemPermissao'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
 import FinanceiroTabs from '@/components/FinanceiroTabs'
-
-interface Propriedade { id: string; nome: string }
-interface Safra       { id: string; nome: string; propriedadeId?: string }
+import { usePropriedade } from '@/contexts/PropriedadeContext'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -56,44 +53,25 @@ const fields = [
 export default function FinanceiroPage() {
   const router = useRouter()
 
-  // auth
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const [canCreate,  setCanCreate]  = useState(false)
+  const [periodo,    setPeriodo]    = useState<PeriodoFiltro>('MES_ATUAL')
 
-  // period for KPIs
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
+  // ── Contexto global de propriedade ──
+  const {
+    propriedades, safrasFiltradas,
+    propriedadeId, setPropriedadeId,
+    safraId, setSafraId,
+  } = usePropriedade()
 
-  // LOCAL farm/harvest selector — no dependency on SafraContext
-  const [propriedades,    setPropriedades]    = useState<Propriedade[]>([])
-  const [safras,          setSafras]          = useState<Safra[]>([])
-  const [safrasFiltradas, setSafrasFiltradas] = useState<Safra[]>([])
-  const [propriedadeId,   setPropriedadeId]   = useState('')
-  const [safraId,         setSafraId]         = useState('')
-
-  // Load lists once
-  useEffect(() => {
-    api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
-    api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
-  }, [])
-
-  // Filter harvests when farm changes
-  useEffect(() => {
-    if (propriedadeId) {
-      setSafrasFiltradas(safras.filter(s => s.propriedadeId === propriedadeId))
-    } else {
-      setSafrasFiltradas(safras)
-    }
-    setSafraId('')
-  }, [propriedadeId, safras])
-
-  // KPIs
+  // KPIs filtrados
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
   )
   const resumo      = data?.resumo
   const lancamentos = data?.lancamentosRecentes ?? []
 
-  // Permissions
+  // Permissões
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
@@ -104,6 +82,15 @@ export default function FinanceiroPage() {
       setAutorizado(isAdmin || perm?.financeiro?.ver === true ? true : false)
     }
   }, [])
+
+  // Navegar para /novo passando propriedade/safra como query params
+  const handleNovo = () => {
+    const params = new URLSearchParams()
+    if (propriedadeId) params.set('fazendaId', propriedadeId)
+    if (safraId)       params.set('safraId', safraId)
+    const query = params.toString()
+    router.push(query ? `/financeiro/novo?${query}` : '/financeiro/novo')
+  }
 
   if (autorizado === null) return null
   if (!autorizado)         return <SemPermissao />
@@ -119,13 +106,17 @@ export default function FinanceiroPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white">Financeiro</h1>
-            <p className="text-xs text-gray-400">Lançamentos de receitas e despesas.</p>
+            <p className="text-xs text-gray-400">
+              {propriedadeId
+                ? `Exibindo: ${propriedades.find(p => p.id === propriedadeId)?.nome ?? 'Propriedade selecionada'}`
+                : 'Lançamentos de receitas e despesas.'}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
 
-          {/* LOCAL farm selector */}
+          {/* Seletor de propriedade (global) */}
           {propriedades.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
               <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -143,7 +134,7 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {/* LOCAL harvest selector */}
+          {/* Seletor de safra (global, filtrado por propriedade) */}
           {safrasFiltradas.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
               <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -161,7 +152,7 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {/* KPI period */}
+          {/* Período dos KPIs */}
           <select
             value={periodo}
             onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
@@ -181,7 +172,7 @@ export default function FinanceiroPage() {
 
           {canCreate && (
             <button
-              onClick={() => router.push('/financeiro/novo')}
+              onClick={handleNovo}
               className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-xl transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -223,7 +214,7 @@ export default function FinanceiroPage() {
         <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
       </div>
 
-      {/* ── Lancamentos — key changes when farm/harvest change → remounts CrudPage ── */}
+      {/* ── Lista — key muda quando filtro muda → remonta CrudPage ── */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
