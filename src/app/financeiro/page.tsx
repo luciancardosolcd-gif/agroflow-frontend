@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import {
@@ -12,6 +12,7 @@ import SemPermissao from '@/components/ui/SemPermissao'
 import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
 import FinanceiroTabs from '@/components/FinanceiroTabs'
 import { usePropriedade } from '@/contexts/PropriedadeContext'
+import api from '@/lib/api'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
@@ -55,7 +56,11 @@ export default function FinanceiroPage() {
 
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const [canCreate,  setCanCreate]  = useState(false)
-  const [periodo,    setPeriodo]    = useState<PeriodoFiltro>('MES_ATUAL')
+  const [periodo,    setPeriodo]    = useState<PeriodoFiltro>('ANO_ATUAL')
+
+  // ── Todos os lançamentos da fazenda (para as Tabs) ──
+  const [todosLancamentos,     setTodosLancamentos]     = useState<any[]>([])
+  const [loadingTodos, setLoadingTodos] = useState(false)
 
   // ── Contexto global de propriedade ──
   const {
@@ -64,12 +69,33 @@ export default function FinanceiroPage() {
     safraId, setSafraId,
   } = usePropriedade()
 
-  // KPIs filtrados
+  // KPIs filtrados por período
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
   )
-  const resumo      = data?.resumo
-  const lancamentos = data?.lancamentosRecentes ?? []
+  const resumo = data?.resumo
+
+  // ── Busca TODOS os lançamentos da fazenda (sem filtro de período) para as Tabs ──
+  const carregarTodosLancamentos = useCallback(async () => {
+    setLoadingTodos(true)
+    try {
+      let url = '/financeiro'
+      const params: string[] = []
+      if (propriedadeId) params.push(`fazendaId=${propriedadeId}`)
+      if (safraId)       params.push(`safraId=${safraId}`)
+      if (params.length > 0) url += `?${params.join('&')}`
+      const { data } = await api.get(url)
+      setTodosLancamentos(Array.isArray(data) ? data : [])
+    } catch {
+      setTodosLancamentos([])
+    } finally {
+      setLoadingTodos(false)
+    }
+  }, [propriedadeId, safraId])
+
+  useEffect(() => {
+    carregarTodosLancamentos()
+  }, [carregarTodosLancamentos])
 
   // Permissões
   useEffect(() => {
@@ -83,7 +109,6 @@ export default function FinanceiroPage() {
     }
   }, [])
 
-  // Navegar para /novo passando propriedade/safra como query params
   const handleNovo = () => {
     const params = new URLSearchParams()
     if (propriedadeId) params.set('fazendaId', propriedadeId)
@@ -164,10 +189,10 @@ export default function FinanceiroPage() {
           </select>
 
           <button
-            onClick={refetch}
+            onClick={() => { refetch(); carregarTodosLancamentos() }}
             className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading || loadingTodos ? 'animate-spin' : ''}`} />
           </button>
 
           {canCreate && (
@@ -209,12 +234,12 @@ export default function FinanceiroPage() {
           sub="Margem de lucro" />
       </div>
 
-      {/* ── Tabs ── */}
+      {/* ── Tabs — usa TODOS os lançamentos da fazenda, não só os recentes ── */}
       <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
-        <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
+        <FinanceiroTabs lancamentos={todosLancamentos} loading={loadingTodos} />
       </div>
 
-      {/* ── Lista — key muda quando filtro muda → remonta CrudPage ── */}
+      {/* ── Lista ── */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
