@@ -1,38 +1,58 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { ArrowLeft, Save, DollarSign, Calendar, Tag, FileText, TrendingUp, TrendingDown, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ArrowLeft, Save, DollarSign, Calendar, Tag, FileText, TrendingUp, TrendingDown, CheckCircle, Clock, AlertCircle, MapPin, Sprout } from 'lucide-react'
 import api from '@/lib/api'
 import CategoriaSeletor from '@/components/CategoriaSeletor'
 import Cookies from 'js-cookie'
+import { usePropriedade } from '@/contexts/PropriedadeContext'
 
 interface LancamentoPageProps {
   id?: string // se vier id, é edição
 }
 
 const STATUS_OPTIONS = [
-  { value: 'pago', label: 'Pago', icon: CheckCircle, color: 'text-green-400 bg-green-400/10 border-green-400/30' },
-  { value: 'pendente', label: 'Pendente', icon: Clock, color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' },
+  { value: 'pago',      label: 'Pago',      icon: CheckCircle, color: 'text-green-400 bg-green-400/10 border-green-400/30' },
+  { value: 'pendente',  label: 'Pendente',  icon: Clock,       color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30' },
   { value: 'Em Aberto', label: 'Em Aberto', icon: AlertCircle, color: 'text-blue-400 bg-blue-400/10 border-blue-400/30' },
 ]
 
 export default function LancamentoPage({ id }: LancamentoPageProps) {
-  const router = useRouter()
-  const isEdit = !!id
+  const router       = useRouter()
+  const searchParams = useSearchParams()
+  const isEdit       = !!id
 
-  const [token, setToken] = useState('')
-  const [saving, setSaving] = useState(false)
+  // ── Contexto global de propriedade ──
+  const {
+    propriedades, safrasFiltradas,
+    propriedadeId: ctxPropriedadeId,
+    safraId:       ctxSafraId,
+  } = usePropriedade()
+
+  // Resolve fazendaId e safraId:
+  // 1. URL params (vindo do botão "Novo" na listagem)
+  // 2. Contexto global (seleção persistida)
+  // 3. Vazio (sem filtro)
+  const [fazendaId, setFazendaId] = useState(
+    searchParams.get('fazendaId') || ctxPropriedadeId || ''
+  )
+  const [safraId, setSafraId] = useState(
+    searchParams.get('safraId') || ctxSafraId || ''
+  )
+
+  const [token,   setToken]   = useState('')
+  const [saving,  setSaving]  = useState(false)
   const [loading, setLoading] = useState(isEdit)
-  const [error, setError] = useState('')
+  const [error,   setError]   = useState('')
 
   const [form, setForm] = useState({
-    descricao: '',
-    valor: '',
-    tipo: 'DESPESA' as 'RECEITA' | 'DESPESA',
-    data: new Date().toISOString().split('T')[0],
-    dataVencimento: '',
-    status: 'pendente',
-    observacao: '',
+    descricao:            '',
+    valor:                '',
+    tipo:                 'DESPESA' as 'RECEITA' | 'DESPESA',
+    data:                 new Date().toISOString().split('T')[0],
+    dataVencimento:       '',
+    status:               'pendente',
+    observacao:           '',
     financial_category_id: '',
   })
 
@@ -45,15 +65,18 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         .then(r => {
           const d = r.data
           setForm({
-            descricao: d.descricao || '',
-            valor: String(d.valor || ''),
-            tipo: d.tipo || 'DESPESA',
-            data: d.data ? d.data.split('T')[0] : '',
-            dataVencimento: d.dataVencimento ? d.dataVencimento.split('T')[0] : '',
-            status: d.status || 'pendente',
-            observacao: d.observacao || '',
+            descricao:            d.descricao || '',
+            valor:                String(d.valor || ''),
+            tipo:                 d.tipo || 'DESPESA',
+            data:                 d.data ? d.data.split('T')[0] : '',
+            dataVencimento:       d.dataVencimento ? d.dataVencimento.split('T')[0] : '',
+            status:               d.status || 'pendente',
+            observacao:           d.observacao || '',
             financial_category_id: d.financial_category_id || '',
           })
+          // Ao editar, preenche fazendaId/safraId do próprio registro
+          if (d.fazendaId) setFazendaId(d.fazendaId)
+          if (d.safraId)   setSafraId(d.safraId)
         })
         .catch(() => setError('Erro ao carregar lançamento'))
         .finally(() => setLoading(false))
@@ -75,6 +98,9 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         ...form,
         valor: parseFloat(form.valor.replace(',', '.')),
         financial_category_id: form.financial_category_id || null,
+        // ── CAMPOS QUE FALTAVAM ──
+        fazendaId: fazendaId || null,
+        safraId:   safraId   || null,
       }
       if (isEdit) {
         await api.put(`/financeiro/${id}`, payload)
@@ -89,6 +115,10 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
       setSaving(false)
     }
   }
+
+  // Nome legível da propriedade selecionada
+  const propriedadeNome = propriedades.find(p => p.id === fazendaId)?.nome
+  const safraNome       = safrasFiltradas.find(s => s.id === safraId)?.nome
 
   if (loading) {
     return (
@@ -114,6 +144,20 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           <h1 className="text-white font-semibold text-lg">
             {isEdit ? 'Editar Lançamento' : 'Novo Lançamento'}
           </h1>
+          {/* Badge da propriedade/safra ativa */}
+          {propriedadeNome && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-green-900/30 border border-green-800/40 text-xs text-green-400">
+              <MapPin className="w-3 h-3" />
+              {propriedadeNome}
+              {safraNome && (
+                <>
+                  <span className="text-green-700">·</span>
+                  <Sprout className="w-3 h-3" />
+                  {safraNome}
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3">
@@ -146,6 +190,46 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
           </div>
         )}
 
+        {/* ── Propriedade / Safra ── */}
+        <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-4">
+          <p className="text-xs text-green-700 uppercase tracking-widest">Vínculo da propriedade</p>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-green-400 text-sm font-medium block mb-2">
+                <MapPin className="w-3.5 h-3.5 inline mr-1.5" />
+                Propriedade
+              </label>
+              <select
+                value={fazendaId}
+                onChange={e => { setFazendaId(e.target.value); setSafraId('') }}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-3 text-green-200 text-sm outline-none focus:border-green-600 transition-colors"
+              >
+                <option value="">Sem vínculo</option>
+                {propriedades.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-green-400 text-sm font-medium block mb-2">
+                <Sprout className="w-3.5 h-3.5 inline mr-1.5" />
+                Safra
+              </label>
+              <select
+                value={safraId}
+                onChange={e => setSafraId(e.target.value)}
+                disabled={!fazendaId}
+                className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-3 text-green-200 text-sm outline-none focus:border-green-600 transition-colors disabled:opacity-40"
+              >
+                <option value="">Sem vínculo</option>
+                {safrasFiltradas.map(s => (
+                  <option key={s.id} value={s.id}>{s.nome}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
         {/* ── Tipo de operação ── */}
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6">
           <p className="text-xs text-green-700 uppercase tracking-widest mb-4">Tipo de operação financeira</p>
@@ -163,7 +247,7 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
                 }`}
               >
                 {t === 'RECEITA'
-                  ? <TrendingUp className="w-5 h-5" />
+                  ? <TrendingUp  className="w-5 h-5" />
                   : <TrendingDown className="w-5 h-5" />
                 }
                 <span className="font-medium">{t === 'RECEITA' ? 'Receita' : 'Despesa'}</span>
@@ -176,7 +260,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-5">
           <p className="text-xs text-green-700 uppercase tracking-widest">Informações gerais</p>
 
-          {/* Descrição */}
           <div>
             <label className="text-green-400 text-sm font-medium block mb-2">
               <FileText className="w-3.5 h-3.5 inline mr-1.5" />
@@ -191,7 +274,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
             />
           </div>
 
-          {/* Data + Valor lado a lado */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-green-400 text-sm font-medium block mb-2">
@@ -219,11 +301,8 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
             </div>
           </div>
 
-          {/* Observação */}
           <div>
-            <label className="text-green-400 text-sm font-medium block mb-2">
-              Observação
-            </label>
+            <label className="text-green-400 text-sm font-medium block mb-2">Observação</label>
             <textarea
               value={form.observacao}
               onChange={e => set('observacao', e.target.value)}
@@ -257,7 +336,6 @@ export default function LancamentoPage({ id }: LancamentoPageProps) {
             </div>
           </div>
 
-          {/* Status de pagamento */}
           <div>
             <label className="text-green-400 text-sm font-medium block mb-3">Status de pagamento</label>
             <div className="grid grid-cols-3 gap-3">
