@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import Cookies from 'js-cookie'
 import api from '@/lib/api'
 
 interface Propriedade { id: string; nome: string }
@@ -26,19 +27,21 @@ const PropriedadeContext = createContext<PropriedadeContextType>({
 })
 
 export function PropriedadeProvider({ children }: { children: ReactNode }) {
-  const [propriedades,    setPropriedades]    = useState<Propriedade[]>([])
-  const [safras,          setSafras]          = useState<Safra[]>([])
-  const [safrasFiltradas, setSafrasFiltradas] = useState<Safra[]>([])
-  const [propriedadeId,   setPropriedadeIdRaw] = useState('')
-  const [safraId,         setSafraId]          = useState('')
+  const [propriedades,     setPropriedades]    = useState<Propriedade[]>([])
+  const [safras,           setSafras]          = useState<Safra[]>([])
+  const [safrasFiltradas,  setSafrasFiltradas] = useState<Safra[]>([])
+  const [propriedadeId,    setPropriedadeIdRaw] = useState('')
+  const [safraId,          setSafraId]          = useState('')
 
-  // Carrega listas uma vez
+  // ── Só carrega se houver token ──
   useEffect(() => {
+    const token = Cookies.get('accessToken')
+    if (!token) return
+
     api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
     api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
   }, [])
 
-  // Filtra safras quando propriedade muda
   const setPropriedadeId = (id: string) => {
     setPropriedadeIdRaw(id)
     setSafraId('')
