@@ -1,5 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { usePathname } from 'next/navigation'
 import Cookies from 'js-cookie'
 import api from '@/lib/api'
 
@@ -27,20 +28,26 @@ const PropriedadeContext = createContext<PropriedadeContextType>({
 })
 
 export function PropriedadeProvider({ children }: { children: ReactNode }) {
-  const [propriedades,     setPropriedades]    = useState<Propriedade[]>([])
-  const [safras,           setSafras]          = useState<Safra[]>([])
-  const [safrasFiltradas,  setSafrasFiltradas] = useState<Safra[]>([])
-  const [propriedadeId,    setPropriedadeIdRaw] = useState('')
-  const [safraId,          setSafraId]          = useState('')
+  const pathname = usePathname()
+  const [propriedades,    setPropriedades]     = useState<Propriedade[]>([])
+  const [safras,          setSafras]           = useState<Safra[]>([])
+  const [safrasFiltradas, setSafrasFiltradas]  = useState<Safra[]>([])
+  const [propriedadeId,   setPropriedadeIdRaw] = useState('')
+  const [safraId,         setSafraId]          = useState('')
 
-  // ── Só carrega se houver token ──
+  // ── Recarrega sempre que a rota muda (ex: após login) ──
   useEffect(() => {
     const token = Cookies.get('accessToken')
     if (!token) return
 
-    api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
-    api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
-  }, [])
+    // Só busca se ainda não tiver carregado
+    if (propriedades.length === 0) {
+      api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
+    }
+    if (safras.length === 0) {
+      api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
+    }
+  }, [pathname]) // ← roda toda vez que navega para uma nova página
 
   const setPropriedadeId = (id: string) => {
     setPropriedadeIdRaw(id)
