@@ -25,9 +25,9 @@ interface Safra {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  planejamento:  'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
-  em_andamento:  'text-green-400 bg-green-400/10 border-green-400/30',
-  finalizada:    'text-gray-400 bg-gray-400/10 border-gray-400/30',
+  planejamento: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
+  em_andamento: 'text-green-400 bg-green-400/10 border-green-400/30',
+  finalizada:   'text-gray-400 bg-gray-400/10 border-gray-400/30',
 }
 const STATUS_LABELS: Record<string, string> = {
   planejamento: 'Planejamento',
@@ -71,19 +71,17 @@ export default function SafrasPage() {
   const [saving, setSaving] = useState(false)
   const [perfil, setPerfil] = useState('')
 
-  // ── Usa PropriedadeContext global ──
+  // ── Contexto global de propriedade/safra ──
   const { propriedadeId, safraId } = usePropriedade()
 
+  // ── Dashboard financeiro filtrado por período + fazenda ──
   const { data, loading: loadingFin } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
   const resumo  = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
 
   useEffect(() => {
     const u = Cookies.get('user')
-    if (u) {
-      const parsed = JSON.parse(u)
-      setPerfil(parsed.perfil || '')
-    }
+    if (u) setPerfil(JSON.parse(u).perfil || '')
   }, [])
 
   const isAdmin   = perfil === 'admin'
@@ -132,7 +130,7 @@ export default function SafrasPage() {
     try {
       const payload = {
         ...form,
-        areaHectares: form.areaHectares ? parseFloat(form.areaHectares) : null,
+        areaHectares:  form.areaHectares  ? parseFloat(form.areaHectares)  : null,
         propriedadeId: form.propriedadeId || null,
       }
       if (editing) { await api.put(`/safras/${editing.id}`, payload) }
@@ -153,7 +151,7 @@ export default function SafrasPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-green-100 flex items-center gap-2">
@@ -170,14 +168,15 @@ export default function SafrasPage() {
             ))}
           </select>
           {canCreate && (
-            <button onClick={openNew} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
+            <button onClick={openNew}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium transition-colors">
               <Plus className="w-4 h-4" /> Nova Safra
             </button>
           )}
         </div>
       </div>
 
-      {/* KPIs */}
+      {/* ── KPIs ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Receitas', value: resumo?.totalReceitas ?? 0, icon: <TrendingUp className="w-4 h-4 text-emerald-400" />, border: 'border-emerald-500/20 bg-emerald-500/5' },
@@ -191,16 +190,22 @@ export default function SafrasPage() {
               <div className="p-1.5 rounded-xl bg-white/5">{icon}</div>
             </div>
             <p className="text-xl font-bold text-white">
-              {loadingFin ? '...' : label === 'Margem' ? `${resumo?.margemLucro ?? 0}%` : formatCurrency(value as number)}
+              {loadingFin ? '...' : label === 'Margem'
+                ? `${resumo?.margemLucro ?? 0}%`
+                : formatCurrency(value as number)}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Custo Realizado */}
-      <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
+      {/* ── Custo Realizado — respeita período e fazenda global ── */}
+      <PainelCustoRealizado
+        fazendaId={propriedadeId}
+        safraId={safraId}
+        periodo={periodo}
+      />
 
-      {/* Evolução Mensal */}
+      {/* ── Evolução Mensal ── */}
       <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
         <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
         <div className="flex gap-4 mb-3">
@@ -218,7 +223,7 @@ export default function SafrasPage() {
         )}
       </div>
 
-      {/* Formulário */}
+      {/* ── Formulário ── */}
       {showForm && (
         <div className="bg-[#111811] border border-[#1e2e1e] rounded-2xl p-6 space-y-4">
           <h2 className="text-green-200 font-semibold">{editing ? 'Editar Safra' : 'Nova Safra'}</h2>
@@ -243,7 +248,8 @@ export default function SafrasPage() {
             </div>
             <div>
               <label className="text-green-400 text-sm block mb-1">Área (ha)</label>
-              <input type="number" value={form.areaHectares} onChange={e => setForm(p => ({ ...p, areaHectares: e.target.value }))}
+              <input type="number" value={form.areaHectares}
+                onChange={e => setForm(p => ({ ...p, areaHectares: e.target.value }))}
                 className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
             </div>
             <div>
@@ -267,25 +273,29 @@ export default function SafrasPage() {
             </div>
             <div>
               <label className="text-green-400 text-sm block mb-1">Data Início</label>
-              <input type="date" value={form.dataInicio} onChange={e => setForm(p => ({ ...p, dataInicio: e.target.value }))}
+              <input type="date" value={form.dataInicio}
+                onChange={e => setForm(p => ({ ...p, dataInicio: e.target.value }))}
                 className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
             </div>
             <div>
               <label className="text-green-400 text-sm block mb-1">Data Fim</label>
-              <input type="date" value={form.dataFim} onChange={e => setForm(p => ({ ...p, dataFim: e.target.value }))}
+              <input type="date" value={form.dataFim}
+                onChange={e => setForm(p => ({ ...p, dataFim: e.target.value }))}
                 className="w-full bg-[#1a251a] border border-[#243324] rounded-xl px-4 py-2 text-green-200 text-sm outline-none focus:border-green-600" />
             </div>
           </div>
           <div className="flex gap-3">
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 border border-[#243324] text-green-600 rounded-xl text-sm">Cancelar</button>
-            <button onClick={handleSave} disabled={saving} className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium disabled:opacity-50">
+            <button onClick={() => setShowForm(false)}
+              className="px-4 py-2 border border-[#243324] text-green-600 rounded-xl text-sm">Cancelar</button>
+            <button onClick={handleSave} disabled={saving}
+              className="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-sm font-medium disabled:opacity-50">
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
       )}
 
-      {/* Lista de safras */}
+      {/* ── Lista de safras ── */}
       <div>
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Safras Cadastradas</h2>
         {loading ? (
