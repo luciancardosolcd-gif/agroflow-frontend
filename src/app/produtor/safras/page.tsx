@@ -4,50 +4,35 @@ import { Plus, Edit2, Trash2, Sprout, Calendar, TrendingUp, TrendingDown, Dollar
 import api from '@/lib/api'
 import Cookies from 'js-cookie'
 import PainelCustoRealizado from '@/components/PainelCustoRealizado'
-import { useSafraContext } from '@/lib/SafraContext'
+import { usePropriedade } from '@/contexts/PropriedadeContext'
 import { useDashboardFinanceiro, PeriodoFiltro } from '../../financeiro/useDashboardFinanceiro'
 
-const SUPER_ADMINS = ['luciancardoso@agroflow.com', 'admin01@agroflow.com']
-
 const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
-  { value: 'MES_ATUAL', label: 'Mês Atual' },
+  { value: 'MES_ATUAL',    label: 'Mês Atual'    },
   { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
-  { value: 'TRIMESTRE', label: 'Trimestre' },
-  { value: 'ANO_ATUAL', label: 'Ano Atual' },
+  { value: 'TRIMESTRE',    label: 'Trimestre'    },
+  { value: 'ANO_ATUAL',    label: 'Ano Atual'    },
 ]
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
-interface Propriedade {
-  id: string
-  nome: string
-}
-
+interface Propriedade { id: string; nome: string }
 interface Safra {
-  id: string
-  nome: string
-  cultura?: string
-  ano?: string
-  areaHectares?: number
-  dataInicio?: string
-  dataFim?: string
-  status: string
-  ativa: boolean
-  propriedadeId?: string
-  propriedade?: Propriedade
+  id: string; nome: string; cultura?: string; ano?: string
+  areaHectares?: number; dataInicio?: string; dataFim?: string
+  status: string; ativa: boolean; propriedadeId?: string; propriedade?: Propriedade
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  planejamento: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
-  em_andamento: 'text-green-400 bg-green-400/10 border-green-400/30',
-  finalizada: 'text-gray-400 bg-gray-400/10 border-gray-400/30',
+  planejamento:  'text-yellow-400 bg-yellow-400/10 border-yellow-400/30',
+  em_andamento:  'text-green-400 bg-green-400/10 border-green-400/30',
+  finalizada:    'text-gray-400 bg-gray-400/10 border-gray-400/30',
 }
-
 const STATUS_LABELS: Record<string, string> = {
   planejamento: 'Planejamento',
   em_andamento: 'Em Andamento',
-  finalizada: 'Finalizada',
+  finalizada:   'Finalizada',
 }
 
 function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; despesas: number }[] }) {
@@ -73,38 +58,38 @@ function GraficoEvolucao({ dados }: { dados: { mes: string; receitas: number; de
 }
 
 export default function SafrasPage() {
-  const [safras, setSafras] = useState<Safra[]>([])
+  const [safras,       setSafras]       = useState<Safra[]>([])
   const [propriedades, setPropriedades] = useState<Propriedade[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<Safra | null>(null)
-  const [periodo, setPeriodo] = useState<PeriodoFiltro>('MES_ATUAL')
-  const [form, setForm] = useState({
+  const [loading,      setLoading]      = useState(true)
+  const [showForm,     setShowForm]     = useState(false)
+  const [editing,      setEditing]      = useState<Safra | null>(null)
+  const [periodo,      setPeriodo]      = useState<PeriodoFiltro>('ANO_ATUAL')
+  const [form,         setForm]         = useState({
     nome: '', cultura: '', ano: '', areaHectares: '',
     dataInicio: '', dataFim: '', status: 'planejamento', propriedadeId: ''
   })
   const [saving, setSaving] = useState(false)
-  const [email, setEmail] = useState('')
   const [perfil, setPerfil] = useState('')
-  const { propriedadeId, safraId } = useSafraContext()
+
+  // ── Usa PropriedadeContext global ──
+  const { propriedadeId, safraId } = usePropriedade()
+
   const { data, loading: loadingFin } = useDashboardFinanceiro(periodo, propriedadeId, safraId)
-  const resumo = data?.resumo
+  const resumo  = data?.resumo
   const evolucao = data?.evolucaoMensal ?? []
 
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
       const parsed = JSON.parse(u)
-      setEmail(parsed.email || '')
       setPerfil(parsed.perfil || '')
     }
   }, [])
 
-  const isSuperAdmin = SUPER_ADMINS.includes(email)
-  const isAdmin = perfil === 'admin'
-  const canCreate = isAdmin || isSuperAdmin
-  const canEdit = isAdmin || isSuperAdmin
-  const canDelete = isSuperAdmin
+  const isAdmin   = perfil === 'admin'
+  const canCreate = isAdmin
+  const canEdit   = isAdmin
+  const canDelete = isAdmin
 
   const load = async () => {
     setLoading(true)
@@ -131,12 +116,10 @@ export default function SafrasPage() {
   const openEdit = (s: Safra) => {
     setEditing(s)
     setForm({
-      nome: s.nome,
-      cultura: s.cultura || '',
-      ano: s.ano || '',
+      nome: s.nome, cultura: s.cultura || '', ano: s.ano || '',
       areaHectares: s.areaHectares ? String(s.areaHectares) : '',
       dataInicio: s.dataInicio ? s.dataInicio.split('T')[0] : '',
-      dataFim: s.dataFim ? s.dataFim.split('T')[0] : '',
+      dataFim:    s.dataFim    ? s.dataFim.split('T')[0]    : '',
       status: s.status || 'planejamento',
       propriedadeId: s.propriedadeId || '',
     })
@@ -152,11 +135,8 @@ export default function SafrasPage() {
         areaHectares: form.areaHectares ? parseFloat(form.areaHectares) : null,
         propriedadeId: form.propriedadeId || null,
       }
-      if (editing) {
-        await api.put(`/safras/${editing.id}`, payload)
-      } else {
-        await api.post('/safras', payload)
-      }
+      if (editing) { await api.put(`/safras/${editing.id}`, payload) }
+      else         { await api.post('/safras', payload) }
       setShowForm(false)
       load()
     } finally {
@@ -197,42 +177,30 @@ export default function SafrasPage() {
         </div>
       </div>
 
-      {/* ── 1. KPIs — padding reduzido igual ao Financeiro ── */}
+      {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl p-4 border border-emerald-500/20 bg-emerald-500/5 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Receitas</span>
-            <div className="p-1.5 rounded-xl bg-white/5"><TrendingUp className="w-4 h-4 text-emerald-400" /></div>
+        {[
+          { label: 'Receitas', value: resumo?.totalReceitas ?? 0, icon: <TrendingUp className="w-4 h-4 text-emerald-400" />, border: 'border-emerald-500/20 bg-emerald-500/5' },
+          { label: 'Despesas', value: resumo?.totalDespesas ?? 0, icon: <TrendingDown className="w-4 h-4 text-red-400" />,    border: 'border-red-500/20 bg-red-500/5' },
+          { label: 'Saldo',    value: resumo?.saldo ?? 0,         icon: <DollarSign  className="w-4 h-4 text-blue-400" />,    border: 'border-blue-500/20 bg-blue-500/5' },
+          { label: 'Margem',   value: null,                       icon: <BarChart3   className="w-4 h-4 text-purple-400" />,  border: 'border-purple-500/20 bg-purple-500/5' },
+        ].map(({ label, value, icon, border }) => (
+          <div key={label} className={`rounded-2xl p-4 border ${border} flex flex-col gap-2`}>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-400">{label}</span>
+              <div className="p-1.5 rounded-xl bg-white/5">{icon}</div>
+            </div>
+            <p className="text-xl font-bold text-white">
+              {loadingFin ? '...' : label === 'Margem' ? `${resumo?.margemLucro ?? 0}%` : formatCurrency(value as number)}
+            </p>
           </div>
-          <p className="text-xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}</p>
-        </div>
-        <div className="rounded-2xl p-4 border border-red-500/20 bg-red-500/5 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Despesas</span>
-            <div className="p-1.5 rounded-xl bg-white/5"><TrendingDown className="w-4 h-4 text-red-400" /></div>
-          </div>
-          <p className="text-xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}</p>
-        </div>
-        <div className="rounded-2xl p-4 border border-blue-500/20 bg-blue-500/5 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Saldo</span>
-            <div className="p-1.5 rounded-xl bg-white/5"><DollarSign className="w-4 h-4 text-blue-400" /></div>
-          </div>
-          <p className="text-xl font-bold text-white">{loadingFin ? '...' : formatCurrency(resumo?.saldo ?? 0)}</p>
-        </div>
-        <div className="rounded-2xl p-4 border border-purple-500/20 bg-purple-500/5 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-400">Margem</span>
-            <div className="p-1.5 rounded-xl bg-white/5"><BarChart3 className="w-4 h-4 text-purple-400" /></div>
-          </div>
-          <p className="text-xl font-bold text-white">{loadingFin ? '...' : `${resumo?.margemLucro ?? 0}%`}</p>
-        </div>
+        ))}
       </div>
 
-      {/* ── 2. Custo Realizado (subiu para antes da Evolução Mensal) ── */}
+      {/* Custo Realizado */}
       <PainelCustoRealizado fazendaId={propriedadeId} safraId={safraId} />
 
-      {/* ── 3. Evolução Mensal (desceu para depois do Custo Realizado) ── */}
+      {/* Evolução Mensal */}
       <div className="rounded-2xl border border-white/10 bg-white/3 p-5">
         <h3 className="text-sm font-semibold text-gray-300 mb-1">Evolução Mensal</h3>
         <div className="flex gap-4 mb-3">
@@ -354,7 +322,7 @@ export default function SafrasPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   {s.cultura && <span className="text-xs px-2 py-0.5 bg-green-900/30 text-green-400 rounded-full border border-green-800/40">{s.cultura}</span>}
-                  {s.ano && <span className="text-xs px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-full border border-blue-800/40">{s.ano}</span>}
+                  {s.ano     && <span className="text-xs px-2 py-0.5 bg-blue-900/30 text-blue-400 rounded-full border border-blue-800/40">{s.ano}</span>}
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${STATUS_COLORS[s.status] || STATUS_COLORS.planejamento}`}>
                     {STATUS_LABELS[s.status] || s.status}
                   </span>
