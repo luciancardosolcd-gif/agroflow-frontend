@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
-import { MapPin, Sprout, Tractor, ChevronLeft } from 'lucide-react'
+import { MapPin, Sprout, Tractor, ChevronLeft, Leaf } from 'lucide-react'
 
 export default function ProdutorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -19,9 +19,10 @@ export default function ProdutorLayout({ children }: { children: React.ReactNode
   }, [])
 
   const subItems = [
-    { href: '/produtor',              label: 'Painel Produtor', icon: Tractor, exact: true },
-    { href: '/produtor/propriedades', label: 'Propriedades',    icon: MapPin,  exact: false },
-    { href: '/produtor/safras',       label: 'Safras & Custos', icon: Sprout,  exact: false },
+    { href: '/produtor',                        label: 'Painel Produtor',     icon: Tractor, exact: true },
+    { href: '/produtor/propriedades',           label: 'Propriedades',        icon: MapPin,  exact: false },
+    { href: '/produtor/safras',                 label: 'Safras & Custos',     icon: Sprout,  exact: false },
+    { href: '/produtor/cotacoes-insumos',       label: 'Cotações de Insumos', icon: Leaf,    exact: false },
   ]
 
   return (
