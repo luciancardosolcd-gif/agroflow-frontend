@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Leaf, Calculator, Info } from 'lucide-react';
 import Link from 'next/link';
+import Cookies from 'js-cookie';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -40,7 +41,7 @@ export default function NovaCotacaoPage() {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
+  const token = Cookies.get('accessToken') || '';
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((p) => ({ ...p, [k]: e.target.value }));
