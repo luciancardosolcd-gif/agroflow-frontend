@@ -93,7 +93,8 @@ export default function CotacoesInsumosPage() {
   ] : [];
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-6 space-y-6">
+    <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-6 space-y-4">
+      {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
@@ -114,6 +115,7 @@ export default function CotacoesInsumosPage() {
         </div>
       </div>
 
+      {/* Alertas */}
       {alertas.length > 0 && (
         <div className="space-y-2">
           {alertas.map((a, i) => (
@@ -125,24 +127,7 @@ export default function CotacoesInsumosPage() {
         </div>
       )}
 
-      {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => <div key={i} className="h-24 rounded-xl bg-gray-800/50 animate-pulse" />)}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          {cards.map((c, i) => (
-            <div key={i} className={`rounded-xl border ${c.borda} bg-gradient-to-br ${c.bg} p-4 flex flex-col gap-2`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">{c.label}</span>
-                <c.icon size={16} className={c.cor} />
-              </div>
-              <span className={`text-lg font-bold ${c.cor}`}>{c.valor}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
+      {/* Filtros */}
       {mostrarFiltros && (
         <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4 grid grid-cols-2 md:grid-cols-5 gap-3">
           {[{ key: 'empresa', placeholder: 'Empresa' },{ key: 'produto', placeholder: 'Produto' },{ key: 'principio_ativo', placeholder: 'Princípio Ativo' }].map((f) => (
@@ -166,192 +151,219 @@ export default function CotacoesInsumosPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Comparativo de Preços por Empresa</h3>
-          {ranking.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-gray-500 text-sm">Sem dados</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={ranking} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis dataKey="empresa" type="category" tick={{ fill: '#9ca3af', fontSize: 11 }} width={100} />
-                <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }} />
-                <Bar dataKey="mediaPreco" name="Preço Médio" fill="#22c55e" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-        <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Preço Médio por Segmento</h3>
-          {segmentos.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-gray-500 text-sm">Sem dados</div>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={segmentos} dataKey="mediaPreco" nameKey="segmento" cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3}>
-                  {segmentos.map((_, i) => <Cell key={i} fill={CORES_SEGMENTO[i % CORES_SEGMENTO.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }} />
-                <Legend wrapperStyle={{ fontSize: 11, color: '#9ca3af' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-        <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-5 md:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-300">Evolução dos Preços</h3>
-            <div className="flex gap-2">
-              {[7, 30, 90].map((d) => (
-                <button key={d} onClick={() => setPeriodoEvolucao(d)}
-                  className={`px-3 py-1 rounded-lg text-xs transition ${periodoEvolucao === d ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>{d}d</button>
-              ))}
+      {/* Layout principal: 2 colunas */}
+      <div className="flex gap-4 items-start">
+
+        {/* Coluna esquerda — lista de cotações (~28%) */}
+        <div className="w-[28%] flex-shrink-0 rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
+          <div className="px-3 py-3 border-b border-gray-700/40">
+            <h3 className="text-xs font-semibold text-gray-300">
+              Cotações Cadastradas <span className="text-gray-500 font-normal">({cotacoes.length})</span>
+            </h3>
+          </div>
+          {loading ? (
+            <div className="p-3 space-y-2">
+              {[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-lg bg-gray-800/50 animate-pulse" />)}
             </div>
-          </div>
-          {evolucao.length === 0 ? (
-            <div className="h-48 flex items-center justify-center text-gray-500 text-sm">Sem dados suficientes</div>
+          ) : cotacoes.length === 0 ? (
+            <div className="py-10 flex flex-col items-center gap-2 text-gray-500 px-3">
+              <Package size={24} className="opacity-30" />
+              <p className="text-xs text-center">Nenhuma cotação cadastrada ainda</p>
+              <Link href="/produtor/cotacoes-insumos/nova" className="text-green-400 hover:text-green-300 text-xs underline">Cadastrar primeira cotação</Link>
+            </div>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={evolucao}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                <XAxis dataKey="data" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8 }} />
-                <Line type="monotone" dataKey="mediaPreco" name="Preço Médio" stroke="#22c55e" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
-
-      {ranking.length > 0 && (
-        <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-5">
-          <h3 className="text-sm font-semibold text-gray-300 mb-4">Empresas Mais Competitivas</h3>
-          <div className="space-y-3">
-            {ranking.map((r, i) => (
-              <div key={i} className="flex items-center gap-4">
-                <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-gray-400 text-black' : i === 2 ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{i + 1}°</span>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-white font-medium">{r.empresa}</span>
-                    <span className="text-xs text-green-400 font-semibold">{formatCurrency(r.mediaPreco)}</span>
+            <div className="overflow-y-auto max-h-[calc(100vh-200px)] divide-y divide-gray-800/60">
+              {cotacoes.map((c: any) => (
+                <div key={c.id} className="px-3 py-2.5 hover:bg-gray-800/30 transition group">
+                  <div className="flex items-start justify-between gap-1 mb-1">
+                    <span className="text-xs font-semibold text-white leading-tight truncate">{c.empresa}</span>
+                    <span className="text-xs font-bold text-green-400 flex-shrink-0">{formatCurrency(c.preco_unitario, c.moeda)}</span>
                   </div>
-                  <div className="w-full bg-gray-800 rounded-full h-1.5">
-                    <div className="bg-green-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.max(10, 100 - i * 18)}%` }} />
+                  <div className="text-[11px] text-gray-400 truncate mb-1">{c.produto_comercial}</div>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="px-1.5 py-0.5 rounded-full bg-green-900/40 text-green-300 text-[10px] border border-green-700/30 truncate max-w-[60%]">{c.segmento}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-gray-500">{formatDate(c.data_cotacao)}</span>
+                      <Link href={`/produtor/cotacoes-insumos/editar/${c.id}`} className="text-[10px] text-blue-400 hover:text-blue-300 opacity-0 group-hover:opacity-100 transition">Editar</Link>
+                    </div>
                   </div>
-                </div>
-                <span className="text-xs text-gray-500">{r.totalCotacoes} cot.</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <GitCompare size={16} className="text-blue-400" />
-          <h3 className="text-sm font-semibold text-gray-300">Comparador de Cotações por Princípio Ativo</h3>
-        </div>
-        <div className="flex gap-3">
-          <input placeholder="Digite o princípio ativo (ex: Fluazinam, Fipronil...)" value={compararIA}
-            onChange={(e) => setComparar(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executarComparacao()}
-            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
-          <button onClick={executarComparacao} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition">
-            <GitCompare size={14} /> Comparar
-          </button>
-        </div>
-        {comparacao?.resumo && (
-          <div className="mt-4 space-y-3">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[
-                { label: 'Menor Preço', valor: formatCurrency(comparacao.resumo.menorPreco), cor: 'text-green-400' },
-                { label: 'Maior Preço', valor: formatCurrency(comparacao.resumo.maiorPreco), cor: 'text-red-400' },
-                { label: 'Preço Médio', valor: formatCurrency(comparacao.resumo.precoMedio), cor: 'text-blue-400' },
-                { label: 'Diferença', valor: `${comparacao.resumo.diferencaPercentual.toFixed(1)}%`, cor: 'text-orange-400' },
-                { label: 'Empresas', valor: comparacao.resumo.totalEmpresas, cor: 'text-purple-400' },
-              ].map((item, i) => (
-                <div key={i} className="bg-gray-800/50 rounded-lg p-3 text-center">
-                  <div className="text-xs text-gray-400 mb-1">{item.label}</div>
-                  <div className={`font-bold text-sm ${item.cor}`}>{item.valor}</div>
+                  {c.principio_ativo && (
+                    <div className="text-[10px] text-gray-500 mt-0.5 truncate">{c.principio_ativo}{c.concentracao ? ` · ${c.concentracao} ${c.unidade_concentracao}` : ''}</div>
+                  )}
                 </div>
               ))}
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-gray-400 border-b border-gray-700">
-                    <th className="text-left py-2 px-3">Empresa</th>
-                    <th className="text-left py-2 px-3">Produto</th>
-                    <th className="text-right py-2 px-3">Preço</th>
-                    <th className="text-left py-2 px-3">Prazo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {comparacao.cotacoes.map((c: any, i: number) => (
-                    <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/30">
-                      <td className="py-2 px-3 text-white">{c.empresa}</td>
-                      <td className="py-2 px-3 text-gray-300">{c.produto_comercial}</td>
-                      <td className={`py-2 px-3 text-right font-semibold ${i === 0 ? 'text-green-400' : 'text-white'}`}>{formatCurrency(c.preco_unitario, c.moeda)}</td>
-                      <td className="py-2 px-3 text-gray-400">{c.prazo_pagamento}</td>
-                    </tr>
+          )}
+        </div>
+
+        {/* Coluna direita — dashboard (~72%) */}
+        <div className="flex-1 min-w-0 space-y-4">
+
+          {/* Cards do dashboard */}
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {[...Array(6)].map((_, i) => <div key={i} className="h-20 rounded-xl bg-gray-800/50 animate-pulse" />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {cards.map((c, i) => (
+                <div key={i} className={`rounded-xl border ${c.borda} bg-gradient-to-br ${c.bg} p-4 flex flex-col gap-2`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">{c.label}</span>
+                    <c.icon size={15} className={c.cor} />
+                  </div>
+                  <span className={`text-base font-bold ${c.cor}`}>{c.valor}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Gráficos */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3">Comparativo de Preços por Empresa</h3>
+              {ranking.length === 0 ? (
+                <div className="h-40 flex items-center justify-center text-gray-500 text-xs">Sem dados</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={ranking} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                    <XAxis type="number" tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                    <YAxis dataKey="empresa" type="category" tick={{ fill: '#9ca3af', fontSize: 10 }} width={90} />
+                    <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 11 }} />
+                    <Bar dataKey="mediaPreco" name="Preço Médio" fill="#22c55e" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3">Preço Médio por Segmento</h3>
+              {segmentos.length === 0 ? (
+                <div className="h-40 flex items-center justify-center text-gray-500 text-xs">Sem dados</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <PieChart>
+                    <Pie data={segmentos} dataKey="mediaPreco" nameKey="segmento" cx="50%" cy="50%" innerRadius={40} outerRadius={70} paddingAngle={3}>
+                      {segmentos.map((_, i) => <Cell key={i} fill={CORES_SEGMENTO[i % CORES_SEGMENTO.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 11 }} />
+                    <Legend wrapperStyle={{ fontSize: 10, color: '#9ca3af' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4 md:col-span-2">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-xs font-semibold text-gray-300">Evolução dos Preços</h3>
+                <div className="flex gap-1">
+                  {[7, 30, 90].map((d) => (
+                    <button key={d} onClick={() => setPeriodoEvolucao(d)}
+                      className={`px-2.5 py-1 rounded-lg text-xs transition ${periodoEvolucao === d ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}>{d}d</button>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+              {evolucao.length === 0 ? (
+                <div className="h-40 flex items-center justify-center text-gray-500 text-xs">Sem dados suficientes</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={evolucao}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                    <XAxis dataKey="data" tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                    <YAxis tick={{ fill: '#9ca3af', fontSize: 10 }} />
+                    <Tooltip formatter={(v: any) => formatCurrency(v)} contentStyle={{ background: '#111827', border: '1px solid #374151', borderRadius: 8, fontSize: 11 }} />
+                    <Line type="monotone" dataKey="mediaPreco" name="Preço Médio" stroke="#22c55e" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
-        )}
-        {comparacao && !comparacao.resumo && (
-          <div className="mt-4 flex items-center gap-2 text-gray-500 text-sm">
-            <Info size={14} /> Nenhuma cotação encontrada para "{compararIA}"
-          </div>
-        )}
-      </div>
 
-      <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-700/40 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-300">Cotações Cadastradas <span className="text-gray-500 font-normal">({cotacoes.length})</span></h3>
-        </div>
-        {cotacoes.length === 0 ? (
-          <div className="py-16 flex flex-col items-center gap-3 text-gray-500">
-            <Package size={32} className="opacity-30" />
-            <p className="text-sm">Nenhuma cotação cadastrada ainda</p>
-            <Link href="/produtor/cotacoes-insumos/nova" className="text-green-400 hover:text-green-300 text-sm underline">Cadastrar primeira cotação</Link>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-gray-400 text-xs bg-gray-800/30 border-b border-gray-700/40">
-                  <th className="text-left py-3 px-4">Empresa</th>
-                  <th className="text-left py-3 px-4">Segmento</th>
-                  <th className="text-left py-3 px-4">Produto</th>
-                  <th className="text-left py-3 px-4">Princípio Ativo</th>
-                  <th className="text-left py-3 px-4">Concentração</th>
-                  <th className="text-right py-3 px-4">Preço</th>
-                  <th className="text-left py-3 px-4">Prazo</th>
-                  <th className="text-left py-3 px-4">Data</th>
-                  <th className="py-3 px-4" />
-                </tr>
-              </thead>
-              <tbody>
-                {cotacoes.map((c: any) => (
-                  <tr key={c.id} className="border-b border-gray-800/60 hover:bg-gray-800/20 transition">
-                    <td className="py-3 px-4 text-white font-medium">{c.empresa}</td>
-                    <td className="py-3 px-4"><span className="px-2 py-0.5 rounded-full bg-green-900/40 text-green-300 text-xs border border-green-700/30">{c.segmento}</span></td>
-                    <td className="py-3 px-4 text-gray-300">{c.produto_comercial}</td>
-                    <td className="py-3 px-4 text-gray-400">{c.principio_ativo || '—'}</td>
-                    <td className="py-3 px-4 text-gray-400">{c.concentracao ? `${c.concentracao} ${c.unidade_concentracao}` : '—'}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-green-400">{formatCurrency(c.preco_unitario, c.moeda)}</td>
-                    <td className="py-3 px-4 text-gray-400 text-xs">{c.prazo_pagamento}</td>
-                    <td className="py-3 px-4 text-gray-500 text-xs">{formatDate(c.data_cotacao)}</td>
-                    <td className="py-3 px-4"><Link href={`/produtor/cotacoes-insumos/editar/${c.id}`} className="text-xs text-blue-400 hover:text-blue-300 transition">Editar</Link></td>
-                  </tr>
+          {/* Ranking de empresas */}
+          {ranking.length > 0 && (
+            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
+              <h3 className="text-xs font-semibold text-gray-300 mb-3">Empresas Mais Competitivas</h3>
+              <div className="space-y-2.5">
+                {ranking.map((r, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-gray-400 text-black' : i === 2 ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{i + 1}°</span>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-xs text-white font-medium">{r.empresa}</span>
+                        <span className="text-[11px] text-green-400 font-semibold">{formatCurrency(r.mediaPreco)}</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-1.5">
+                        <div className="bg-green-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.max(10, 100 - i * 18)}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-gray-500">{r.totalCotacoes} cot.</span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
+          )}
+
+          {/* Comparador de cotações */}
+          <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <GitCompare size={14} className="text-blue-400" />
+              <h3 className="text-xs font-semibold text-gray-300">Comparador de Cotações por Princípio Ativo</h3>
+            </div>
+            <div className="flex gap-2">
+              <input placeholder="Digite o princípio ativo (ex: Fluazinam, Fipronil...)" value={compararIA}
+                onChange={(e) => setComparar(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executarComparacao()}
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
+              <button onClick={executarComparacao} className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition">
+                <GitCompare size={13} /> Comparar
+              </button>
+            </div>
+            {comparacao?.resumo && (
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                  {[
+                    { label: 'Menor Preço', valor: formatCurrency(comparacao.resumo.menorPreco), cor: 'text-green-400' },
+                    { label: 'Maior Preço', valor: formatCurrency(comparacao.resumo.maiorPreco), cor: 'text-red-400' },
+                    { label: 'Preço Médio', valor: formatCurrency(comparacao.resumo.precoMedio), cor: 'text-blue-400' },
+                    { label: 'Diferença', valor: `${comparacao.resumo.diferencaPercentual.toFixed(1)}%`, cor: 'text-orange-400' },
+                    { label: 'Empresas', valor: comparacao.resumo.totalEmpresas, cor: 'text-purple-400' },
+                  ].map((item, i) => (
+                    <div key={i} className="bg-gray-800/50 rounded-lg p-2 text-center">
+                      <div className="text-[10px] text-gray-400 mb-0.5">{item.label}</div>
+                      <div className={`font-bold text-xs ${item.cor}`}>{item.valor}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="text-gray-400 border-b border-gray-700">
+                        <th className="text-left py-2 px-3">Empresa</th>
+                        <th className="text-left py-2 px-3">Produto</th>
+                        <th className="text-right py-2 px-3">Preço</th>
+                        <th className="text-left py-2 px-3">Prazo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {comparacao.cotacoes.map((c: any, i: number) => (
+                        <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/30">
+                          <td className="py-2 px-3 text-white">{c.empresa}</td>
+                          <td className="py-2 px-3 text-gray-300">{c.produto_comercial}</td>
+                          <td className={`py-2 px-3 text-right font-semibold ${i === 0 ? 'text-green-400' : 'text-white'}`}>{formatCurrency(c.preco_unitario, c.moeda)}</td>
+                          <td className="py-2 px-3 text-gray-400">{c.prazo_pagamento}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            {comparacao && !comparacao.resumo && (
+              <div className="mt-3 flex items-center gap-2 text-gray-500 text-xs">
+                <Info size={13} /> Nenhuma cotação encontrada para "{compararIA}"
+              </div>
+            )}
           </div>
-        )}
+
+        </div>
       </div>
     </div>
   );
