@@ -10,6 +10,8 @@ import {
   Leaf, BarChart3
 } from 'lucide-react'
 
+const LOGO_SRC = "..." // ← cole aqui o mesmo valor base64 do layout.tsx
+
 const COMMODITIES = [
   { key: 'soja',      label: 'Soja',      unidade: 'R$/sc 60kg', cor: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5' },
   { key: 'milho',     label: 'Milho',     unidade: 'R$/sc 60kg', cor: 'text-orange-400', bg: 'border-orange-500/20 bg-orange-500/5' },
@@ -113,35 +115,46 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
 
-      {/* ── Subtítulo + Nav horizontal ── */}
-      <div>
-        <p className="text-green-600 text-sm mb-3">Visão geral do sistema AgroFlow</p>
+      {/* ── Cabeçalho da página com logo no canto direito ── */}
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-green-600 text-sm mb-3">Visão geral do sistema AgroFlow</p>
 
-        {/* Barra horizontal estilo Aegro */}
-        <div className="w-full overflow-x-auto scrollbar-none">
-          <div className="flex items-center border-b border-white/8 min-w-max">
-            {navVisivel.map(item => {
-              const active = pathname === item.href
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => router.push(item.href)}
-                  className={`
-                    relative px-4 py-2.5 text-sm font-medium
-                    transition-all duration-200 whitespace-nowrap select-none
-                    ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
-                  `}
-                >
-                  {item.label}
-                  <span className={`
-                    absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
-                    transition-all duration-300
-                    ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
-                  `}/>
-                </button>
-              )
-            })}
+          {/* Barra horizontal de navegação */}
+          <div className="w-full overflow-x-auto scrollbar-none">
+            <div className="flex items-center border-b border-white/8 min-w-max">
+              {navVisivel.map(item => {
+                const active = pathname === item.href
+                return (
+                  <button
+                    key={item.href}
+                    onClick={() => router.push(item.href)}
+                    className={`
+                      relative px-4 py-2.5 text-sm font-medium
+                      transition-all duration-200 whitespace-nowrap select-none
+                      ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
+                    `}
+                  >
+                    {item.label}
+                    <span className={`
+                      absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
+                      transition-all duration-300
+                      ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
+                    `}/>
+                  </button>
+                )
+              })}
+            </div>
           </div>
+        </div>
+
+        {/* Logo no canto superior direito */}
+        <div className="flex-shrink-0 ml-6">
+          <img
+            src={LOGO_SRC}
+            alt="AgroFlow"
+            style={{ height: '78px', width: 'auto', objectFit: 'contain', display: 'block' }}
+          />
         </div>
       </div>
 
