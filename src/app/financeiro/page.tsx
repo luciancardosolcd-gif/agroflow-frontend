@@ -56,23 +56,20 @@ export default function FinanceiroPage() {
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const [canCreate,  setCanCreate]  = useState(false)
   const [periodo,    setPeriodo]    = useState<PeriodoFiltro>('ANO_ATUAL')
+  const [tabsAbertas, setTabsAbertas] = useState(false)
 
-  // ── Contexto global de propriedade ──
   const {
     propriedades, safrasFiltradas,
     propriedadeId, setPropriedadeId,
     safraId, setSafraId,
   } = usePropriedade()
 
-  // ── Dashboard: KPIs + lancamentosRecentes filtrados por período e fazenda ──
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
   )
   const resumo      = data?.resumo
-  // Usa lancamentosRecentes do dashboard — já filtrados por período E fazenda
   const lancamentos = data?.lancamentosRecentes ?? []
 
-  // Permissões
   useEffect(() => {
     const u = Cookies.get('user')
     if (u) {
@@ -115,8 +112,6 @@ export default function FinanceiroPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-
-          {/* Seletor de propriedade (global) */}
           {propriedades.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
               <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -134,7 +129,6 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {/* Seletor de safra (global, filtrado por propriedade) */}
           {safrasFiltradas.length > 0 && (
             <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
               <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -152,7 +146,6 @@ export default function FinanceiroPage() {
             </div>
           )}
 
-          {/* Período — controla KPIs E Contas a Pagar/Receber */}
           <select
             value={periodo}
             onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
@@ -209,12 +202,23 @@ export default function FinanceiroPage() {
           sub="Margem de lucro" />
       </div>
 
-      {/* ── Tabs — usa lancamentosRecentes já filtrados por período e fazenda ── */}
-      <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
-        <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
+      {/* ── Tabs — Contas a Pagar / Receber (colapsável) ── */}
+      <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
+        <button
+          onClick={() => setTabsAbertas(prev => !prev)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+        >
+          <span className="text-sm font-medium text-gray-300">Contas a Pagar / Contas a Receber</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${tabsAbertas ? 'rotate-180' : ''}`} />
+        </button>
+        {tabsAbertas && (
+          <div className="px-4 pb-4">
+            <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
+          </div>
+        )}
       </div>
 
-      {/* ── Lista completa da fazenda (sem filtro de período) ── */}
+      {/* ── Lista completa da fazenda ── */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
