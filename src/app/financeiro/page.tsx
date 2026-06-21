@@ -162,16 +162,6 @@ export default function FinanceiroPage() {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
-
-          {canCreate && (
-            <button
-              onClick={handleNovo}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm font-medium rounded-xl transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Novo
-            </button>
-          )}
         </div>
       </div>
 
