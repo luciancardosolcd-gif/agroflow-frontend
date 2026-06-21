@@ -1,166 +1,145 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import Cookies from 'js-cookie'
-import {
-  DollarSign, TrendingUp, TrendingDown,
-  Wallet, BarChart2, RefreshCw, ChevronDown
-} from 'lucide-react'
-import CrudPage from '@/components/ui/CrudPage'
-import SemPermissao from '@/components/ui/SemPermissao'
-import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
-import FinanceiroTabs from '@/components/FinanceiroTabs'
+import SafraSeletor from '@/components/SafraSeletor'
+import { Bell, Search, MapPin, Sprout, ChevronDown } from 'lucide-react'
 import { usePropriedade } from '@/contexts/PropriedadeContext'
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+const LOGO_SRC = "..." // ← mantenha aqui o valor base64 original do seu arquivo
 
-function KpiCard({ title, value, icon, color, sub }: {
-  title: string; value: string; icon: React.ReactNode; color: string; sub?: string
-}) {
-  return (
-    <div className={`rounded-xl px-4 py-3 border ${color} flex flex-col gap-1.5`}>
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-400">{title}</span>
-        <div className="p-1.5 rounded-lg bg-white/5">{icon}</div>
-      </div>
-      <div>
-        <p className="text-base font-bold text-white leading-tight">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
-      </div>
-    </div>
-  )
-}
-
-const fields = [
-  { key: 'descricao',      label: 'Descrição',      required: true },
-  { key: 'valor',          label: 'Valor',           type: 'number' },
-  { key: 'tipo',           label: 'Tipo',            type: 'select', options: ['RECEITA', 'DESPESA'] },
-  { key: 'data',           label: 'Data',            type: 'date' },
-  { key: 'status',         label: 'Status',          type: 'select', options: ['pendente', 'pago', 'Em Aberto'] },
-  { key: 'dataVencimento', label: 'Data Vencimento', type: 'date' },
-  { key: 'observacao',     label: 'Observação' },
+const PERIODOS = [
+  { value: 'MES_ATUAL',    label: 'Mês Atual'    },
+  { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
+  { value: 'TRIMESTRE',    label: 'Trimestre'    },
+  { value: 'ANO_ATUAL',    label: 'Ano Atual'    },
 ]
 
-export default function FinanceiroPage() {
-  const router = useRouter()
-  const [autorizado,  setAutorizado]  = useState<boolean | null>(null)
-  const [canCreate,   setCanCreate]   = useState(false)
-  const [tabsAbertas, setTabsAbertas] = useState(false)
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router   = useRouter()
+  const pathname = usePathname()
+  const [user, setUser] = useState<{ nome: string; perfil: string } | null>(null)
 
   const {
-    propriedades,
-    propriedadeId, safraId,
-    periodo,
+    propriedades, safrasFiltradas,
+    propriedadeId, setPropriedadeId,
+    safraId, setSafraId,
+    periodo, setPeriodo,
   } = usePropriedade()
 
-  const { data, loading, error, refetch } = useDashboardFinanceiro(
-    periodo as PeriodoFiltro, propriedadeId, safraId
-  )
-  const resumo      = data?.resumo
-  const lancamentos = data?.lancamentosRecentes ?? []
+  const isFinanceiro = pathname.startsWith('/financeiro')
 
   useEffect(() => {
+    const token = Cookies.get('accessToken')
+    if (!token) { router.push('/login'); return }
     const u = Cookies.get('user')
-    if (u) {
-      const parsed = JSON.parse(u)
-      const isAdmin = parsed.perfil === 'admin'
-      const perm    = parsed.permissoes || {}
-      setCanCreate(isAdmin || perm?.financeiro?.criar === true)
-      setAutorizado(isAdmin || perm?.financeiro?.ver === true ? true : false)
-    }
-  }, [])
-
-  const handleNovo = () => {
-    const params = new URLSearchParams()
-    if (propriedadeId) params.set('fazendaId', propriedadeId)
-    if (safraId)       params.set('safraId', safraId)
-    const query = params.toString()
-    router.push(query ? `/financeiro/novo?${query}` : '/financeiro/novo')
-  }
-
-  if (autorizado === null) return null
-  if (!autorizado)         return <SemPermissao />
+    if (u) setUser(JSON.parse(u))
+  }, [router])
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col min-h-screen bg-[#0a0f0a]">
 
       {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-green-500/10">
-            <DollarSign className="w-6 h-6 text-green-400" />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">Financeiro</h1>
-            <p className="text-xs text-gray-400">
-              {propriedadeId
-                ? `Exibindo: ${propriedades.find(p => p.id === propriedadeId)?.nome ?? 'Propriedade selecionada'}`
-                : 'Lançamentos de receitas e despesas.'}
-            </p>
-          </div>
+      <header className="h-24 bg-[#0d160d] border-b border-[#1a251a] flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-30 w-full">
+
+        {/* Logo */}
+        <div className="flex items-center">
+          <img
+            src={LOGO_SRC}
+            alt="AgroFlow"
+            style={{ height: '78px', width: 'auto', objectFit: 'contain', display: 'block' }}
+          />
         </div>
-        <button
-          onClick={refetch}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
-          {error}
+        {/* Centro: filtros do financeiro OU busca global */}
+        <div className="flex items-center gap-3 mx-10 flex-1 max-w-2xl">
+          {isFinanceiro ? (
+            <>
+              {propriedades.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-[#1a251a] border border-[#243324] rounded-xl px-3 py-2">
+                  <MapPin className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                  <select
+                    value={propriedadeId}
+                    onChange={e => setPropriedadeId(e.target.value)}
+                    className="bg-transparent text-sm text-green-300 outline-none cursor-pointer max-w-[150px]"
+                  >
+                    <option value="">Todas propriedades</option>
+                    {propriedades.map(p => (
+                      <option key={p.id} value={p.id}>{p.nome}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3 h-3 text-green-600 flex-shrink-0" />
+                </div>
+              )}
+
+              {safrasFiltradas.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-[#1a251a] border border-[#243324] rounded-xl px-3 py-2">
+                  <Sprout className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
+                  <select
+                    value={safraId}
+                    onChange={e => setSafraId(e.target.value)}
+                    className="bg-transparent text-sm text-green-300 outline-none cursor-pointer max-w-[130px]"
+                  >
+                    <option value="">Todas safras</option>
+                    {safrasFiltradas.map(s => (
+                      <option key={s.id} value={s.id}>{s.nome}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-3 h-3 text-green-600 flex-shrink-0" />
+                </div>
+              )}
+
+              <div className="flex items-center gap-1.5 bg-[#1a251a] border border-[#243324] rounded-xl px-3 py-2">
+                <select
+                  value={periodo}
+                  onChange={e => setPeriodo(e.target.value)}
+                  className="bg-transparent text-sm text-green-300 outline-none cursor-pointer"
+                >
+                  {PERIODOS.map(p => (
+                    <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="w-3 h-3 text-green-600 flex-shrink-0" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-3 bg-[#1a251a] rounded-xl px-4 py-2.5 w-full border border-[#243324]">
+                <Search className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <input
+                  placeholder="Buscar..."
+                  className="bg-transparent text-sm text-green-300 placeholder-green-700 outline-none w-full"
+                />
+              </div>
+              <SafraSeletor />
+            </>
+          )}
         </div>
-      )}
 
-      {/* ── KPI cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard title="Receitas"
-          value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
-          icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
-          color="border-emerald-500/20 bg-emerald-500/5" />
-        <KpiCard title="Despesas"
-          value={loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}
-          icon={<TrendingDown className="w-4 h-4 text-red-400" />}
-          color="border-red-500/20 bg-red-500/5" />
-        <KpiCard title="Saldo"
-          value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}
-          icon={<Wallet className="w-4 h-4 text-blue-400" />}
-          color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`} />
-        <KpiCard title="Margem"
-          value={loading ? '...' : `${resumo?.margemLucro ?? 0}%`}
-          icon={<BarChart2 className="w-4 h-4 text-purple-400" />}
-          color="border-purple-500/20 bg-purple-500/5"
-          sub="Margem de lucro" />
-      </div>
+        {/* Direita: Sino + Usuário */}
+        <div className="flex items-center gap-4">
+          <button className="relative w-9 h-9 bg-[#1a251a] rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 border border-[#243324]">
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-green-500 rounded-full" />
+          </button>
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-sm text-green-200 font-medium">{user.nome}</div>
+                <div className="text-xs text-green-600 capitalize">{user.perfil}</div>
+              </div>
+              <div className="w-9 h-9 bg-green-800 rounded-lg flex items-center justify-center text-green-200 font-semibold text-sm">
+                {user.nome.charAt(0).toUpperCase()}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
 
-      {/* ── Tabs — Contas a Pagar / Receber (colapsável) ── */}
-      <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
-        <button
-          onClick={() => setTabsAbertas(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
-        >
-          <span className="text-sm font-medium text-gray-300">Contas a Pagar / Contas a Receber</span>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${tabsAbertas ? 'rotate-180' : ''}`} />
-        </button>
-        {tabsAbertas && (
-          <div className="px-4 pb-4">
-            <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
-          </div>
-        )}
-      </div>
-
-      {/* ── Lista completa da fazenda ── */}
-      <CrudPage
-        key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
-        title="Lançamentos"
-        endpoint="/financeiro"
-        fields={fields}
-        icon={<DollarSign className="w-8 h-8 text-green-400" />}
-        fazendaId={propriedadeId || ''}
-        safraId={safraId || undefined}
-      />
+      {/* ── Conteúdo ── */}
+      <main className="flex-1 p-6 overflow-auto">
+        {children}
+      </main>
 
     </div>
   )
