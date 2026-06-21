@@ -130,46 +130,104 @@ export default function CotacoesInsumosPage() {
       {/* Layout principal: 2 colunas */}
       <div className="flex gap-4 items-start">
 
-        {/* Coluna esquerda — lista de cotações (~28%) */}
-        <div className="w-[28%] flex-shrink-0 rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
-          <div className="px-3 py-3 border-b border-gray-700/40">
-            <h3 className="text-xs font-semibold text-gray-300">
-              Cotações Cadastradas <span className="text-gray-500 font-normal">({cotacoes.length})</span>
-            </h3>
-          </div>
-          {loading ? (
+        {/* Coluna esquerda (~28%) */}
+        <div className="w-[28%] flex-shrink-0 space-y-3">
+
+          {/* Comparador de cotações */}
+          <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
+            <div className="px-3 py-3 border-b border-gray-700/40">
+              <div className="flex items-center gap-2">
+                <GitCompare size={13} className="text-blue-400" />
+                <h3 className="text-xs font-semibold text-gray-300">Comparador por Princípio Ativo</h3>
+              </div>
+            </div>
             <div className="p-3 space-y-2">
-              {[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-lg bg-gray-800/50 animate-pulse" />)}
-            </div>
-          ) : cotacoes.length === 0 ? (
-            <div className="py-10 flex flex-col items-center gap-2 text-gray-500 px-3">
-              <Package size={24} className="opacity-30" />
-              <p className="text-xs text-center">Nenhuma cotação cadastrada ainda</p>
-              <Link href="/produtor/cotacoes-insumos/nova" className="text-green-400 hover:text-green-300 text-xs underline">Cadastrar primeira cotação</Link>
-            </div>
-          ) : (
-            <div className="overflow-y-auto max-h-[calc(100vh-200px)] divide-y divide-gray-800/60">
-              {cotacoes.map((c: any) => (
-                <div key={c.id} className="px-3 py-2.5 hover:bg-gray-800/30 transition group">
-                  <div className="flex items-start justify-between gap-1 mb-1">
-                    <span className="text-xs font-semibold text-white leading-tight truncate">{c.empresa}</span>
-                    <span className="text-xs font-bold text-green-400 flex-shrink-0">{formatCurrency(c.preco_unitario, c.moeda)}</span>
+              <div className="flex gap-1.5">
+                <input
+                  placeholder="Ex: Fluazinam, Fipronil..."
+                  value={compararIA}
+                  onChange={(e) => setComparar(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && executarComparacao()}
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                />
+                <button onClick={executarComparacao} className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-medium transition">
+                  <GitCompare size={11} /> Buscar
+                </button>
+              </div>
+              {comparacao?.resumo && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { label: 'Menor', valor: formatCurrency(comparacao.resumo.menorPreco), cor: 'text-green-400' },
+                      { label: 'Maior', valor: formatCurrency(comparacao.resumo.maiorPreco), cor: 'text-red-400' },
+                      { label: 'Médio', valor: formatCurrency(comparacao.resumo.precoMedio), cor: 'text-blue-400' },
+                      { label: 'Diferença', valor: `${comparacao.resumo.diferencaPercentual.toFixed(1)}%`, cor: 'text-orange-400' },
+                    ].map((item, i) => (
+                      <div key={i} className="bg-gray-800/50 rounded-lg p-1.5 text-center">
+                        <div className="text-[9px] text-gray-400">{item.label}</div>
+                        <div className={`font-bold text-[10px] ${item.cor}`}>{item.valor}</div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-[11px] text-gray-400 truncate mb-1">{c.produto_comercial}</div>
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="px-1.5 py-0.5 rounded-full bg-green-900/40 text-green-300 text-[10px] border border-green-700/30 truncate max-w-[60%]">{c.segmento}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-gray-500">{formatDate(c.data_cotacao)}</span>
-                      <Link href={`/produtor/cotacoes-insumos/editar/${c.id}`} className="text-[10px] text-blue-400 hover:text-blue-300 opacity-0 group-hover:opacity-100 transition">Editar</Link>
-                    </div>
+                  <div className="space-y-1">
+                    {comparacao.cotacoes.map((c: any, i: number) => (
+                      <div key={i} className={`flex items-center justify-between px-2 py-1.5 rounded-lg text-[10px] ${i === 0 ? 'bg-green-900/30 border border-green-700/30' : 'bg-gray-800/40'}`}>
+                        <span className="text-gray-300 truncate flex-1">{c.empresa}</span>
+                        <span className={`font-bold flex-shrink-0 ml-1 ${i === 0 ? 'text-green-400' : 'text-white'}`}>{formatCurrency(c.preco_unitario, c.moeda)}</span>
+                      </div>
+                    ))}
                   </div>
-                  {c.principio_ativo && (
-                    <div className="text-[10px] text-gray-500 mt-0.5 truncate">{c.principio_ativo}{c.concentracao ? ` · ${c.concentracao} ${c.unidade_concentracao}` : ''}</div>
-                  )}
                 </div>
-              ))}
+              )}
+              {comparacao && !comparacao.resumo && (
+                <div className="flex items-center gap-1.5 text-gray-500 text-[10px] py-1">
+                  <Info size={11} /> Nenhuma cotação encontrada
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Lista de cotações */}
+          <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
+            <div className="px-3 py-3 border-b border-gray-700/40">
+              <h3 className="text-xs font-semibold text-gray-300">
+                Cotações Cadastradas <span className="text-gray-500 font-normal">({cotacoes.length})</span>
+              </h3>
+            </div>
+            {loading ? (
+              <div className="p-3 space-y-2">
+                {[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-lg bg-gray-800/50 animate-pulse" />)}
+              </div>
+            ) : cotacoes.length === 0 ? (
+              <div className="py-10 flex flex-col items-center gap-2 text-gray-500 px-3">
+                <Package size={24} className="opacity-30" />
+                <p className="text-xs text-center">Nenhuma cotação cadastrada ainda</p>
+                <Link href="/produtor/cotacoes-insumos/nova" className="text-green-400 hover:text-green-300 text-xs underline">Cadastrar primeira cotação</Link>
+              </div>
+            ) : (
+              <div className="overflow-y-auto max-h-[calc(100vh-400px)] divide-y divide-gray-800/60">
+                {cotacoes.map((c: any) => (
+                  <div key={c.id} className="px-3 py-2.5 hover:bg-gray-800/30 transition group">
+                    <div className="flex items-start justify-between gap-1 mb-1">
+                      <span className="text-xs font-semibold text-white leading-tight truncate">{c.empresa}</span>
+                      <span className="text-xs font-bold text-green-400 flex-shrink-0">{formatCurrency(c.preco_unitario, c.moeda)}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400 truncate mb-1">{c.produto_comercial}</div>
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="px-1.5 py-0.5 rounded-full bg-green-900/40 text-green-300 text-[10px] border border-green-700/30 truncate max-w-[60%]">{c.segmento}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500">{formatDate(c.data_cotacao)}</span>
+                        <Link href={`/produtor/cotacoes-insumos/editar/${c.id}`} className="text-[10px] text-blue-400 hover:text-blue-300 opacity-0 group-hover:opacity-100 transition">Editar</Link>
+                      </div>
+                    </div>
+                    {c.principio_ativo && (
+                      <div className="text-[10px] text-gray-500 mt-0.5 truncate">{c.principio_ativo}{c.concentracao ? ` · ${c.concentracao} ${c.unidade_concentracao}` : ''}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Coluna direita — dashboard (~72%) */}
@@ -277,67 +335,6 @@ export default function CotacoesInsumosPage() {
               </div>
             </div>
           )}
-
-          {/* Comparador de cotações */}
-          <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <GitCompare size={14} className="text-blue-400" />
-              <h3 className="text-xs font-semibold text-gray-300">Comparador de Cotações por Princípio Ativo</h3>
-            </div>
-            <div className="flex gap-2">
-              <input placeholder="Digite o princípio ativo (ex: Fluazinam, Fipronil...)" value={compararIA}
-                onChange={(e) => setComparar(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && executarComparacao()}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500" />
-              <button onClick={executarComparacao} className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium transition">
-                <GitCompare size={13} /> Comparar
-              </button>
-            </div>
-            {comparacao?.resumo && (
-              <div className="mt-3 space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                  {[
-                    { label: 'Menor Preço', valor: formatCurrency(comparacao.resumo.menorPreco), cor: 'text-green-400' },
-                    { label: 'Maior Preço', valor: formatCurrency(comparacao.resumo.maiorPreco), cor: 'text-red-400' },
-                    { label: 'Preço Médio', valor: formatCurrency(comparacao.resumo.precoMedio), cor: 'text-blue-400' },
-                    { label: 'Diferença', valor: `${comparacao.resumo.diferencaPercentual.toFixed(1)}%`, cor: 'text-orange-400' },
-                    { label: 'Empresas', valor: comparacao.resumo.totalEmpresas, cor: 'text-purple-400' },
-                  ].map((item, i) => (
-                    <div key={i} className="bg-gray-800/50 rounded-lg p-2 text-center">
-                      <div className="text-[10px] text-gray-400 mb-0.5">{item.label}</div>
-                      <div className={`font-bold text-xs ${item.cor}`}>{item.valor}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr className="text-gray-400 border-b border-gray-700">
-                        <th className="text-left py-2 px-3">Empresa</th>
-                        <th className="text-left py-2 px-3">Produto</th>
-                        <th className="text-right py-2 px-3">Preço</th>
-                        <th className="text-left py-2 px-3">Prazo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {comparacao.cotacoes.map((c: any, i: number) => (
-                        <tr key={i} className="border-b border-gray-800 hover:bg-gray-800/30">
-                          <td className="py-2 px-3 text-white">{c.empresa}</td>
-                          <td className="py-2 px-3 text-gray-300">{c.produto_comercial}</td>
-                          <td className={`py-2 px-3 text-right font-semibold ${i === 0 ? 'text-green-400' : 'text-white'}`}>{formatCurrency(c.preco_unitario, c.moeda)}</td>
-                          <td className="py-2 px-3 text-gray-400">{c.prazo_pagamento}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            {comparacao && !comparacao.resumo && (
-              <div className="mt-3 flex items-center gap-2 text-gray-500 text-xs">
-                <Info size={13} /> Nenhuma cotação encontrada para "{compararIA}"
-              </div>
-            )}
-          </div>
 
         </div>
       </div>
