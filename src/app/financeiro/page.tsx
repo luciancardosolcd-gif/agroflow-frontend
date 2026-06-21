@@ -95,73 +95,72 @@ export default function FinanceiroPage() {
   return (
     <div className="space-y-5">
 
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-green-500/10">
-            <DollarSign className="w-6 h-6 text-green-400" />
+      {/* ── Barra de filtros no topo (acima do cabeçalho) ── */}
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        {propriedades.length > 0 && (
+          <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
+            <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+            <select
+              value={propriedadeId}
+              onChange={e => setPropriedadeId(e.target.value)}
+              className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[140px]"
+            >
+              <option value="">Todas propriedades</option>
+              {propriedades.map(p => (
+                <option key={p.id} value={p.id}>{p.nome}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">Financeiro</h1>
-            <p className="text-xs text-gray-400">
-              {propriedadeId
-                ? `Exibindo: ${propriedades.find(p => p.id === propriedadeId)?.nome ?? 'Propriedade selecionada'}`
-                : 'Lançamentos de receitas e despesas.'}
-            </p>
+        )}
+
+        {safrasFiltradas.length > 0 && (
+          <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
+            <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+            <select
+              value={safraId}
+              onChange={e => setSafraId(e.target.value)}
+              className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[120px]"
+            >
+              <option value="">Todas safras</option>
+              {safrasFiltradas.map(s => (
+                <option key={s.id} value={s.id}>{s.nome}</option>
+              ))}
+            </select>
+            <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
           </div>
+        )}
+
+        <select
+          value={periodo}
+          onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
+          className="bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+        >
+          {PERIODOS.map((p) => (
+            <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
+          ))}
+        </select>
+
+        <button
+          onClick={refetch}
+          className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+
+      {/* ── Header (só o título) ── */}
+      <div className="flex items-center gap-3">
+        <div className="p-2 rounded-xl bg-green-500/10">
+          <DollarSign className="w-6 h-6 text-green-400" />
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {propriedades.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
-              <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-              <select
-                value={propriedadeId}
-                onChange={e => setPropriedadeId(e.target.value)}
-                className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[140px]"
-              >
-                <option value="">Todas propriedades</option>
-                {propriedades.map(p => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
-            </div>
-          )}
-
-          {safrasFiltradas.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
-              <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-              <select
-                value={safraId}
-                onChange={e => setSafraId(e.target.value)}
-                className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[120px]"
-              >
-                <option value="">Todas safras</option>
-                {safrasFiltradas.map(s => (
-                  <option key={s.id} value={s.id}>{s.nome}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
-            </div>
-          )}
-
-          <select
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
-            className="bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
-          >
-            {PERIODOS.map((p) => (
-              <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
-            ))}
-          </select>
-
-          <button
-            onClick={refetch}
-            className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+        <div>
+          <h1 className="text-lg font-bold text-white">Financeiro</h1>
+          <p className="text-xs text-gray-400">
+            {propriedadeId
+              ? `Exibindo: ${propriedades.find(p => p.id === propriedadeId)?.nome ?? 'Propriedade selecionada'}`
+              : 'Lançamentos de receitas e despesas.'}
+          </p>
         </div>
       </div>
 
