@@ -13,8 +13,10 @@ interface PropriedadeContextType {
   safrasFiltradas: Safra[]
   propriedadeId:   string
   safraId:         string
+  periodo:         string
   setPropriedadeId: (id: string) => void
   setSafraId:       (id: string) => void
+  setPeriodo:       (p: string) => void
 }
 
 const PropriedadeContext = createContext<PropriedadeContextType>({
@@ -23,8 +25,10 @@ const PropriedadeContext = createContext<PropriedadeContextType>({
   safrasFiltradas: [],
   propriedadeId:   '',
   safraId:         '',
+  periodo:         'ANO_ATUAL',
   setPropriedadeId: () => {},
   setSafraId:       () => {},
+  setPeriodo:       () => {},
 })
 
 export function PropriedadeProvider({ children }: { children: ReactNode }) {
@@ -34,20 +38,18 @@ export function PropriedadeProvider({ children }: { children: ReactNode }) {
   const [safrasFiltradas, setSafrasFiltradas]  = useState<Safra[]>([])
   const [propriedadeId,   setPropriedadeIdRaw] = useState('')
   const [safraId,         setSafraId]          = useState('')
+  const [periodo,         setPeriodo]          = useState('ANO_ATUAL')
 
-  // ── Recarrega sempre que a rota muda (ex: após login) ──
   useEffect(() => {
     const token = Cookies.get('accessToken')
     if (!token) return
-
-    // Só busca se ainda não tiver carregado
     if (propriedades.length === 0) {
       api.get('/propriedades').then(r => setPropriedades(r.data)).catch(() => {})
     }
     if (safras.length === 0) {
       api.get('/safras').then(r => setSafras(r.data)).catch(() => {})
     }
-  }, [pathname]) // ← roda toda vez que navega para uma nova página
+  }, [pathname])
 
   const setPropriedadeId = (id: string) => {
     setPropriedadeIdRaw(id)
@@ -65,8 +67,8 @@ export function PropriedadeProvider({ children }: { children: ReactNode }) {
   return (
     <PropriedadeContext.Provider value={{
       propriedades, safras, safrasFiltradas,
-      propriedadeId, safraId,
-      setPropriedadeId, setSafraId,
+      propriedadeId, safraId, periodo,
+      setPropriedadeId, setSafraId, setPeriodo,
     }}>
       {children}
     </PropriedadeContext.Provider>
