@@ -2,76 +2,165 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
-import { Bell, Search } from 'lucide-react'
+import {
+  DollarSign, TrendingUp, TrendingDown,
+  Wallet, BarChart2, RefreshCw, ChevronDown
+} from 'lucide-react'
+import CrudPage from '@/components/ui/CrudPage'
+import SemPermissao from '@/components/ui/SemPermissao'
+import { useDashboardFinanceiro, PeriodoFiltro } from './useDashboardFinanceiro'
+import FinanceiroTabs from '@/components/FinanceiroTabs'
+import { usePropriedade } from '@/contexts/PropriedadeContext'
 
-const LOGO_SRC = "data:image/png;base64,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lm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ7qEnNSvlm4eBZqSipJJ81NBFwEAAFBoCDQBAAAC5LjmnwZdQ4BvZzC4z/ZOFgAAAABJRU5ErkJggg=="
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
 
-export default function FinanceiroLayout({ children }: { children: React.ReactNode }) {
+function KpiCard({ title, value, icon, color, sub }: {
+  title: string; value: string; icon: React.ReactNode; color: string; sub?: string
+}) {
+  return (
+    <div className={`rounded-xl px-4 py-3 border ${color} flex flex-col gap-1.5`}>
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium text-gray-400">{title}</span>
+        <div className="p-1.5 rounded-lg bg-white/5">{icon}</div>
+      </div>
+      <div>
+        <p className="text-base font-bold text-white leading-tight">{value}</p>
+        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  )
+}
+
+const fields = [
+  { key: 'descricao',      label: 'Descrição',      required: true },
+  { key: 'valor',          label: 'Valor',           type: 'number' },
+  { key: 'tipo',           label: 'Tipo',            type: 'select', options: ['RECEITA', 'DESPESA'] },
+  { key: 'data',           label: 'Data',            type: 'date' },
+  { key: 'status',         label: 'Status',          type: 'select', options: ['pendente', 'pago', 'Em Aberto'] },
+  { key: 'dataVencimento', label: 'Data Vencimento', type: 'date' },
+  { key: 'observacao',     label: 'Observação' },
+]
+
+export default function FinanceiroPage() {
   const router = useRouter()
-  const [user, setUser] = useState<{ nome: string; perfil: string } | null>(null)
+  const [autorizado,  setAutorizado]  = useState<boolean | null>(null)
+  const [canCreate,   setCanCreate]   = useState(false)
+  const [tabsAbertas, setTabsAbertas] = useState(false)
+
+  const {
+    propriedades,
+    propriedadeId, safraId,
+    periodo,
+  } = usePropriedade()
+
+  const { data, loading, error, refetch } = useDashboardFinanceiro(
+    periodo as PeriodoFiltro, propriedadeId, safraId
+  )
+  const resumo      = data?.resumo
+  const lancamentos = data?.lancamentosRecentes ?? []
 
   useEffect(() => {
-    const token = Cookies.get('accessToken')
-    if (!token) { router.push('/login'); return }
     const u = Cookies.get('user')
-    if (u) setUser(JSON.parse(u))
-  }, [router])
+    if (u) {
+      const parsed = JSON.parse(u)
+      const isAdmin = parsed.perfil === 'admin'
+      const perm    = parsed.permissoes || {}
+      setCanCreate(isAdmin || perm?.financeiro?.criar === true)
+      setAutorizado(isAdmin || perm?.financeiro?.ver === true ? true : false)
+    }
+  }, [])
+
+  const handleNovo = () => {
+    const params = new URLSearchParams()
+    if (propriedadeId) params.set('fazendaId', propriedadeId)
+    if (safraId)       params.set('safraId', safraId)
+    const query = params.toString()
+    router.push(query ? `/financeiro/novo?${query}` : '/financeiro/novo')
+  }
+
+  if (autorizado === null) return null
+  if (!autorizado)         return <SemPermissao />
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0a0f0a]">
+    <div className="space-y-5">
 
       {/* ── Header ── */}
-      <header className="h-24 bg-[#0d160d] border-b border-[#1a251a] flex items-center justify-between px-8 flex-shrink-0 sticky top-0 z-30 w-full">
-
-        {/* Logo */}
-        <div className="flex items-center">
-          <img
-            src={LOGO_SRC}
-            alt="AgroFlow"
-            style={{
-              height: '78px',
-              width: 'auto',
-              objectFit: 'contain',
-              display: 'block',
-            }}
-          />
-        </div>
-
-        {/* Centro: Busca — SafraSeletor removido, seletor está na page.tsx */}
-        <div className="flex items-center gap-3 mx-10 flex-1 max-w-2xl">
-          <div className="flex items-center gap-3 bg-[#1a251a] rounded-xl px-4 py-2.5 w-full border border-[#243324]">
-            <Search className="w-4 h-4 text-green-600 flex-shrink-0" />
-            <input
-              placeholder="Buscar..."
-              className="bg-transparent text-sm text-green-300 placeholder-green-700 outline-none w-full"
-            />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-green-500/10">
+            <DollarSign className="w-6 h-6 text-green-400" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-white">Financeiro</h1>
+            <p className="text-xs text-gray-400">
+              {propriedadeId
+                ? `Exibindo: ${propriedades.find(p => p.id === propriedadeId)?.nome ?? 'Propriedade selecionada'}`
+                : 'Lançamentos de receitas e despesas.'}
+            </p>
           </div>
         </div>
+        <button
+          onClick={refetch}
+          className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
 
-        {/* Direita: Sino + Usuário */}
-        <div className="flex items-center gap-4">
-          <button className="relative w-9 h-9 bg-[#1a251a] rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 border border-[#243324]">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-green-500 rounded-full" />
-          </button>
-          {user && (
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-sm text-green-200 font-medium">{user.nome}</div>
-                <div className="text-xs text-green-600 capitalize">{user.perfil}</div>
-              </div>
-              <div className="w-9 h-9 bg-green-800 rounded-lg flex items-center justify-center text-green-200 font-semibold text-sm">
-                {user.nome.charAt(0).toUpperCase()}
-              </div>
-            </div>
-          )}
+      {error && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
+          {error}
         </div>
-      </header>
+      )}
 
-      {/* ── Conteúdo ── */}
-      <main className="flex-1 p-6 overflow-auto">
-        {children}
-      </main>
+      {/* ── KPI cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard title="Receitas"
+          value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
+          icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
+          color="border-emerald-500/20 bg-emerald-500/5" />
+        <KpiCard title="Despesas"
+          value={loading ? '...' : formatCurrency(resumo?.totalDespesas ?? 0)}
+          icon={<TrendingDown className="w-4 h-4 text-red-400" />}
+          color="border-red-500/20 bg-red-500/5" />
+        <KpiCard title="Saldo"
+          value={loading ? '...' : formatCurrency(resumo?.saldo ?? 0)}
+          icon={<Wallet className="w-4 h-4 text-blue-400" />}
+          color={`border-blue-500/20 ${(resumo?.saldo ?? 0) >= 0 ? 'bg-blue-500/5' : 'bg-red-500/5'}`} />
+        <KpiCard title="Margem"
+          value={loading ? '...' : `${resumo?.margemLucro ?? 0}%`}
+          icon={<BarChart2 className="w-4 h-4 text-purple-400" />}
+          color="border-purple-500/20 bg-purple-500/5"
+          sub="Margem de lucro" />
+      </div>
+
+      {/* ── Tabs — Contas a Pagar / Receber (colapsável) ── */}
+      <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
+        <button
+          onClick={() => setTabsAbertas(prev => !prev)}
+          className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+        >
+          <span className="text-sm font-medium text-gray-300">Contas a Pagar / Contas a Receber</span>
+          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${tabsAbertas ? 'rotate-180' : ''}`} />
+        </button>
+        {tabsAbertas && (
+          <div className="px-4 pb-4">
+            <FinanceiroTabs lancamentos={lancamentos} loading={loading} />
+          </div>
+        )}
+      </div>
+
+      {/* ── Lista completa da fazenda ── */}
+      <CrudPage
+        key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
+        title="Lançamentos"
+        endpoint="/financeiro"
+        fields={fields}
+        icon={<DollarSign className="w-8 h-8 text-green-400" />}
+        fazendaId={propriedadeId || ''}
+        safraId={safraId || undefined}
+      />
 
     </div>
   )
