@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Cookies from 'js-cookie';
 import {
   TrendingDown, TrendingUp, Building2, Package, Leaf, Clock,
-  Plus, GitCompare, Filter, Search, RefreshCw, AlertTriangle,
-  CheckCircle, Info, ChevronDown,
+  Plus, GitCompare, Filter, Search, RefreshCw,
+  Info, ChevronDown,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -38,7 +38,6 @@ export default function CotacoesInsumosPage() {
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [compararIA, setComparar] = useState('');
   const [comparacao, setComparacao] = useState<any>(null);
-  const [alertas, setAlertas] = useState<any[]>([]);
 
   const token = Cookies.get('accessToken') || '';
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -58,17 +57,6 @@ export default function CotacoesInsumosPage() {
       setSegmentos(Array.isArray(segs) ? segs : []);
       setRanking(Array.isArray(rank) ? rank : []);
       setEvolucao(Array.isArray(evol) ? evol : []);
-      const novosAlertas: any[] = [];
-      if (Array.isArray(lista) && lista.length > 1) {
-        const precos = lista.map((c: any) => Number(c.preco_unitario));
-        const media = precos.reduce((a: number, b: number) => a + b, 0) / precos.length;
-        lista.forEach((c: any) => {
-          const p = Number(c.preco_unitario);
-          if (p < media * 0.9) novosAlertas.push({ tipo: 'baixo', msg: `${c.produto_comercial} (${c.empresa}) — preço abaixo da média`, id: c.id });
-          else if (p > media * 1.1) novosAlertas.push({ tipo: 'alto', msg: `${c.produto_comercial} (${c.empresa}) — preço acima da média`, id: c.id });
-        });
-      }
-      setAlertas(novosAlertas.slice(0, 5));
     } finally {
       setLoading(false);
     }
@@ -114,18 +102,6 @@ export default function CotacoesInsumosPage() {
           </button>
         </div>
       </div>
-
-      {/* Alertas */}
-      {alertas.length > 0 && (
-        <div className="space-y-2">
-          {alertas.map((a, i) => (
-            <div key={i} className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm border ${a.tipo === 'baixo' ? 'bg-green-900/20 border-green-700/30 text-green-300' : 'bg-red-900/20 border-red-700/30 text-red-300'}`}>
-              {a.tipo === 'baixo' ? <CheckCircle size={14} /> : <AlertTriangle size={14} />}
-              {a.msg}
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* Filtros */}
       {mostrarFiltros && (
