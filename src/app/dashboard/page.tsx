@@ -10,7 +10,7 @@ import {
   Leaf, BarChart3
 } from 'lucide-react'
 
-const LOGO_SRC = "..." // ← cole aqui o mesmo valor base64 do layout.tsx
+const LOGO_SRC = "..." // ← mantenha aqui o valor base64 original do seu arquivo
 
 const COMMODITIES = [
   { key: 'soja',      label: 'Soja',      unidade: 'R$/sc 60kg', cor: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5' },
