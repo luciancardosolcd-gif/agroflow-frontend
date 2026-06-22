@@ -72,16 +72,17 @@ export default function CotacoesInsumosPage() {
   useEffect(() => { carregar(); }, [periodoEvolucao]);
 
   const cards = dashboard ? [
-    { label: 'Menor Cotação', valor: formatCurrency(dashboard.menorCotacao), icon: TrendingDown, cor: 'text-green-400', bg: 'from-green-900/40 to-green-800/20', borda: 'border-green-700/30' },
-    { label: 'Economia Potencial', valor: formatCurrency(dashboard.economiaPotencial), icon: TrendingUp, cor: 'text-blue-400', bg: 'from-blue-900/40 to-blue-800/20', borda: 'border-blue-700/30' },
-    { label: 'Empresas Cadastradas', valor: dashboard.totalEmpresas, icon: Building2, cor: 'text-orange-400', bg: 'from-orange-900/40 to-orange-800/20', borda: 'border-orange-700/30' },
-    { label: 'Produtos Cotados', valor: dashboard.totalProdutos, icon: Package, cor: 'text-purple-400', bg: 'from-purple-900/40 to-purple-800/20', borda: 'border-purple-700/30' },
-    { label: 'Princípios Ativos', valor: dashboard.totalPrincipiosAtivos, icon: Leaf, cor: 'text-teal-400', bg: 'from-teal-900/40 to-teal-800/20', borda: 'border-teal-700/30' },
-    { label: 'Última Atualização', valor: dashboard.ultimaAtualizacao ? formatDate(dashboard.ultimaAtualizacao) : '—', icon: Clock, cor: 'text-yellow-400', bg: 'from-yellow-900/40 to-yellow-800/20', borda: 'border-yellow-700/30' },
+    { label: 'Menor Cotação',       valor: formatCurrency(dashboard.menorCotacao),       icon: TrendingDown, cor: 'text-green-400',  bg: 'from-green-900/40 to-green-800/20',   borda: 'border-green-700/30'  },
+    { label: 'Economia Potencial',  valor: formatCurrency(dashboard.economiaPotencial),  icon: TrendingUp,   cor: 'text-blue-400',   bg: 'from-blue-900/40 to-blue-800/20',    borda: 'border-blue-700/30'   },
+    { label: 'Empresas Cadastradas',valor: dashboard.totalEmpresas,                      icon: Building2,    cor: 'text-orange-400', bg: 'from-orange-900/40 to-orange-800/20', borda: 'border-orange-700/30' },
+    { label: 'Produtos Cotados',    valor: dashboard.totalProdutos,                      icon: Package,      cor: 'text-purple-400', bg: 'from-purple-900/40 to-purple-800/20', borda: 'border-purple-700/30' },
+    { label: 'Princípios Ativos',   valor: dashboard.totalPrincipiosAtivos,              icon: Leaf,         cor: 'text-teal-400',   bg: 'from-teal-900/40 to-teal-800/20',    borda: 'border-teal-700/30'   },
+    { label: 'Última Atualização',  valor: dashboard.ultimaAtualizacao ? formatDate(dashboard.ultimaAtualizacao) : '—', icon: Clock, cor: 'text-yellow-400', bg: 'from-yellow-900/40 to-yellow-800/20', borda: 'border-yellow-700/30' },
   ] : [];
 
   return (
     <div className="min-h-screen bg-[#0a0f0a] text-white p-4 md:p-6 space-y-4">
+
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -130,10 +131,10 @@ export default function CotacoesInsumosPage() {
       {/* Layout principal: 2 colunas */}
       <div className="flex gap-4 items-start">
 
-        {/* Coluna esquerda (~28%) */}
+        {/* ── Coluna esquerda (~28%) ── */}
         <div className="w-[28%] flex-shrink-0 space-y-3">
 
-          {/* Comparador de cotações */}
+          {/* Comparador */}
           <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
             <div className="px-3 py-3 border-b border-gray-700/40">
               <div className="flex items-center gap-2">
@@ -158,10 +159,10 @@ export default function CotacoesInsumosPage() {
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-1.5">
                     {[
-                      { label: 'Menor', valor: formatCurrency(comparacao.resumo.menorPreco), cor: 'text-green-400' },
-                      { label: 'Maior', valor: formatCurrency(comparacao.resumo.maiorPreco), cor: 'text-red-400' },
-                      { label: 'Médio', valor: formatCurrency(comparacao.resumo.precoMedio), cor: 'text-blue-400' },
-                      { label: 'Diferença', valor: `${comparacao.resumo.diferencaPercentual.toFixed(1)}%`, cor: 'text-orange-400' },
+                      { label: 'Menor',     valor: formatCurrency(comparacao.resumo.menorPreco),                    cor: 'text-green-400'  },
+                      { label: 'Maior',     valor: formatCurrency(comparacao.resumo.maiorPreco),                    cor: 'text-red-400'    },
+                      { label: 'Médio',     valor: formatCurrency(comparacao.resumo.precoMedio),                    cor: 'text-blue-400'   },
+                      { label: 'Diferença', valor: `${comparacao.resumo.diferencaPercentual.toFixed(1)}%`,          cor: 'text-orange-400' },
                     ].map((item, i) => (
                       <div key={i} className="bg-gray-800/50 rounded-lg p-1.5 text-center">
                         <div className="text-[9px] text-gray-400">{item.label}</div>
@@ -187,7 +188,7 @@ export default function CotacoesInsumosPage() {
             </div>
           </div>
 
-          {/* Lista de cotações */}
+          {/* Cotações Cadastradas */}
           <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 overflow-hidden">
             <div className="px-3 py-3 border-b border-gray-700/40">
               <h3 className="text-xs font-semibold text-gray-300">
@@ -205,7 +206,7 @@ export default function CotacoesInsumosPage() {
                 <Link href="/produtor/cotacoes-insumos/nova" className="text-green-400 hover:text-green-300 text-xs underline">Cadastrar primeira cotação</Link>
               </div>
             ) : (
-              <div className="overflow-y-auto max-h-[calc(100vh-400px)] divide-y divide-gray-800/60">
+              <div className="overflow-y-auto max-h-56 divide-y divide-gray-800/60">
                 {cotacoes.map((c: any) => (
                   <div key={c.id} className="px-3 py-2.5 hover:bg-gray-800/30 transition group">
                     <div className="flex items-start justify-between gap-1 mb-1">
@@ -228,25 +229,50 @@ export default function CotacoesInsumosPage() {
               </div>
             )}
           </div>
+
+          {/* Empresas Mais Competitivas — movido para cá */}
+          {ranking.length > 0 && (
+            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-3">
+              <h3 className="text-xs font-semibold text-gray-300 mb-2.5">Empresas Mais Competitivas</h3>
+              <div className="space-y-2">
+                {ranking.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold flex-shrink-0 ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-gray-400 text-black' : i === 2 ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{i + 1}°</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-0.5">
+                        <span className="text-[11px] text-white font-medium truncate">{r.empresa}</span>
+                        <span className="text-[10px] text-green-400 font-semibold flex-shrink-0 ml-1">{formatCurrency(r.mediaPreco)}</span>
+                      </div>
+                      <div className="w-full bg-gray-800 rounded-full h-1">
+                        <div className="bg-green-500 h-1 rounded-full transition-all" style={{ width: `${Math.max(10, 100 - i * 18)}%` }} />
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-gray-500 flex-shrink-0">{r.totalCotacoes} cot.</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* Coluna direita — dashboard (~72%) */}
-        <div className="flex-1 min-w-0 space-y-4">
+        {/* ── Coluna direita — dashboard único (~72%) ── */}
+        <div className="flex-1 min-w-0 rounded-xl bg-gray-900/60 border border-gray-700/40 p-4 space-y-4">
 
-          {/* Cards do dashboard */}
+          {/* Cards compactos */}
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {[...Array(6)].map((_, i) => <div key={i} className="h-20 rounded-xl bg-gray-800/50 animate-pulse" />)}
+            <div className="grid grid-cols-3 gap-2">
+              {[...Array(6)].map((_, i) => <div key={i} className="h-14 rounded-lg bg-gray-800/50 animate-pulse" />)}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {cards.map((c, i) => (
-                <div key={i} className={`rounded-xl border ${c.borda} bg-gradient-to-br ${c.bg} p-4 flex flex-col gap-2`}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">{c.label}</span>
-                    <c.icon size={15} className={c.cor} />
+                <div key={i} className={`rounded-lg border ${c.borda} bg-gradient-to-br ${c.bg} px-3 py-2 flex items-center justify-between gap-2`}>
+                  <div>
+                    <div className="text-[10px] text-gray-400 leading-tight">{c.label}</div>
+                    <div className={`text-sm font-bold ${c.cor} mt-0.5`}>{c.valor}</div>
                   </div>
-                  <span className={`text-base font-bold ${c.cor}`}>{c.valor}</span>
+                  <c.icon size={14} className={`${c.cor} flex-shrink-0 opacity-70`} />
                 </div>
               ))}
             </div>
@@ -254,7 +280,7 @@ export default function CotacoesInsumosPage() {
 
           {/* Gráficos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
+            <div className="rounded-xl bg-gray-800/40 border border-gray-700/30 p-4">
               <h3 className="text-xs font-semibold text-gray-300 mb-3">Comparativo de Preços por Empresa</h3>
               {ranking.length === 0 ? (
                 <div className="h-40 flex items-center justify-center text-gray-500 text-xs">Sem dados</div>
@@ -270,7 +296,7 @@ export default function CotacoesInsumosPage() {
                 </ResponsiveContainer>
               )}
             </div>
-            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
+            <div className="rounded-xl bg-gray-800/40 border border-gray-700/30 p-4">
               <h3 className="text-xs font-semibold text-gray-300 mb-3">Preço Médio por Segmento</h3>
               {segmentos.length === 0 ? (
                 <div className="h-40 flex items-center justify-center text-gray-500 text-xs">Sem dados</div>
@@ -286,7 +312,7 @@ export default function CotacoesInsumosPage() {
                 </ResponsiveContainer>
               )}
             </div>
-            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4 md:col-span-2">
+            <div className="rounded-xl bg-gray-800/40 border border-gray-700/30 p-4 md:col-span-2">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-xs font-semibold text-gray-300">Evolução dos Preços</h3>
                 <div className="flex gap-1">
@@ -311,30 +337,6 @@ export default function CotacoesInsumosPage() {
               )}
             </div>
           </div>
-
-          {/* Ranking de empresas */}
-          {ranking.length > 0 && (
-            <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-4">
-              <h3 className="text-xs font-semibold text-gray-300 mb-3">Empresas Mais Competitivas</h3>
-              <div className="space-y-2.5">
-                {ranking.map((r, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-gray-400 text-black' : i === 2 ? 'bg-orange-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{i + 1}°</span>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-xs text-white font-medium">{r.empresa}</span>
-                        <span className="text-[11px] text-green-400 font-semibold">{formatCurrency(r.mediaPreco)}</span>
-                      </div>
-                      <div className="w-full bg-gray-800 rounded-full h-1.5">
-                        <div className="bg-green-500 h-1.5 rounded-full transition-all" style={{ width: `${Math.max(10, 100 - i * 18)}%` }} />
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-gray-500">{r.totalCotacoes} cot.</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
         </div>
       </div>
