@@ -12,6 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
+import { usePropriedade } from '@/contexts/PropriedadeContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 const CORES_SEGMENTO = ['#22c55e','#3b82f6','#f97316','#ef4444','#a855f7','#eab308','#06b6d4','#ec4899','#14b8a6','#64748b'];
@@ -39,18 +40,29 @@ export default function CotacoesInsumosPage() {
   const [compararIA, setComparar] = useState('');
   const [comparacao, setComparacao] = useState<any>(null);
 
+  const { propriedadeId, propriedades } = usePropriedade();
+
   const token = Cookies.get('accessToken') || '';
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   async function carregar() {
     setLoading(true);
     try {
+      const params: Record<string, string> = {
+        ...Object.fromEntries(Object.entries(filtros).filter(([, v]) => v)),
+      };
+      if (propriedadeId) params.fazendaId = propriedadeId;
+
+      const queryString = new URLSearchParams(params).toString();
+      const graficosQuery = propriedadeId ? `?fazendaId=${propriedadeId}` : '';
+      const evolucaoQuery = `?dias=${periodoEvolucao}${propriedadeId ? `&fazendaId=${propriedadeId}` : ''}`;
+
       const [dash, lista, segs, rank, evol] = await Promise.all([
-        fetch(`${API}/cotacoes-insumos/dashboard`, { headers }).then((r) => r.json()),
-        fetch(`${API}/cotacoes-insumos?${new URLSearchParams(Object.fromEntries(Object.entries(filtros).filter(([, v]) => v)))}`, { headers }).then((r) => r.json()),
-        fetch(`${API}/cotacoes-insumos/graficos/segmentos`, { headers }).then((r) => r.json()),
-        fetch(`${API}/cotacoes-insumos/graficos/ranking-empresas`, { headers }).then((r) => r.json()),
-        fetch(`${API}/cotacoes-insumos/graficos/evolucao?dias=${periodoEvolucao}`, { headers }).then((r) => r.json()),
+        fetch(`${API}/cotacoes-insumos/dashboard${graficosQuery}`, { headers }).then((r) => r.json()),
+        fetch(`${API}/cotacoes-insumos?${queryString}`, { headers }).then((r) => r.json()),
+        fetch(`${API}/cotacoes-insumos/graficos/segmentos${graficosQuery}`, { headers }).then((r) => r.json()),
+        fetch(`${API}/cotacoes-insumos/graficos/ranking-empresas${graficosQuery}`, { headers }).then((r) => r.json()),
+        fetch(`${API}/cotacoes-insumos/graficos/evolucao${evolucaoQuery}`, { headers }).then((r) => r.json()),
       ]);
       setDashboard(dash);
       setCotacoes(Array.isArray(lista) ? lista : []);
@@ -64,12 +76,16 @@ export default function CotacoesInsumosPage() {
 
   async function executarComparacao() {
     if (!compararIA.trim()) return;
-    const res = await fetch(`${API}/cotacoes-insumos/comparar?principio_ativo=${encodeURIComponent(compararIA)}`, { headers });
+    const params = new URLSearchParams({ principio_ativo: compararIA });
+    if (propriedadeId) params.set('fazendaId', propriedadeId);
+    const res = await fetch(`${API}/cotacoes-insumos/comparar?${params}`, { headers });
     const data = await res.json();
     setComparacao(data);
   }
 
-  useEffect(() => { carregar(); }, [periodoEvolucao]);
+  useEffect(() => { carregar(); }, [periodoEvolucao, propriedadeId]);
+
+  const propriedadeNome = propriedades.find(p => p.id === propriedadeId)?.nome;
 
   const cards = dashboard ? [
     { label: 'Menor Cotação',       valor: formatCurrency(dashboard.menorCotacao),       icon: TrendingDown, cor: 'text-green-400',  bg: 'from-green-900/40 to-green-800/20',   borda: 'border-green-700/30'  },
@@ -89,7 +105,11 @@ export default function CotacoesInsumosPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
             <Leaf className="text-green-400" size={28} /> Cotações de Insumos
           </h1>
-          <p className="text-gray-400 mt-1 text-sm">Compare preços de defensivos, fertilizantes, sementes e biológicos</p>
+          <p className="text-gray-400 mt-1 text-sm">
+            {propriedadeNome
+              ? `Exibindo cotações de: ${propriedadeNome}`
+              : 'Compare preços de defensivos, fertilizantes, sementes e biológicos'}
+          </p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={carregar} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-700 transition text-sm">
@@ -230,7 +250,7 @@ export default function CotacoesInsumosPage() {
             )}
           </div>
 
-          {/* Empresas Mais Competitivas — movido para cá */}
+          {/* Empresas Mais Competitivas */}
           {ranking.length > 0 && (
             <div className="rounded-xl bg-gray-900/60 border border-gray-700/40 p-3">
               <h3 className="text-xs font-semibold text-gray-300 mb-2.5">Empresas Mais Competitivas</h3>
