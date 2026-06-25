@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Leaf, Calculator, Info } from 'lucide-react';
 import Link from 'next/link';
 import Cookies from 'js-cookie';
+import { usePropriedade } from '@/contexts/PropriedadeContext';
 
 const API = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -37,11 +38,16 @@ function SpinIcon() {
 
 export default function NovaCotacaoPage() {
   const router = useRouter();
+  const { propriedadeId, propriedades } = usePropriedade();
   const [form, setForm] = useState(INITIAL);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
   const token = Cookies.get('accessToken') || '';
+
+  const nomeFazenda = propriedadeId
+    ? propriedades.find((p: any) => String(p.id) === String(propriedadeId))?.nome
+    : null;
 
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -62,12 +68,14 @@ export default function NovaCotacaoPage() {
     setLoading(true);
     setErro('');
     try {
-      const body = {
+      const body: any = {
         ...form,
         concentracao: form.concentracao ? parseFloat(form.concentracao) : undefined,
         volume_embalagem: form.volume_embalagem ? parseFloat(form.volume_embalagem) : undefined,
         preco_unitario: parseFloat(form.preco_unitario),
       };
+      if (propriedadeId) body.fazenda_id = String(propriedadeId);
+
       const res = await fetch(`${API}/cotacoes-insumos`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -95,9 +103,18 @@ export default function NovaCotacaoPage() {
             <h1 className="text-xl font-bold flex items-center gap-2">
               <Leaf size={20} className="text-green-400" /> Nova Cotação de Insumo
             </h1>
-            <p className="text-xs text-gray-400 mt-0.5">Cadastre preços de defensivos, fertilizantes e sementes</p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {nomeFazenda ? `Vinculando à: ${nomeFazenda}` : 'Cadastre preços de defensivos, fertilizantes e sementes'}
+            </p>
           </div>
         </div>
+
+        {/* Aviso de fazenda */}
+        {!propriedadeId && (
+          <div className="rounded-lg bg-yellow-900/20 border border-yellow-700/30 px-4 py-3 text-sm text-yellow-300">
+            Nenhuma fazenda selecionada no cabeçalho. A cotação não será vinculada a uma propriedade específica.
+          </div>
+        )}
 
         <form onSubmit={salvar} className="space-y-5">
 
