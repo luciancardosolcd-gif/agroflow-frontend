@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { usePropriedade } from '@/contexts/PropriedadeContext'
+import { usePropriedade } from '@/contexts/PropriedadeContext'   
 import axios from 'axios'
 import Cookies from 'js-cookie'
 import { Trash2, Plus, Save, Map, Layers } from 'lucide-react'
