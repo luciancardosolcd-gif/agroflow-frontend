@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
-import { MapPin, Sprout, Tractor, ChevronLeft, Leaf } from 'lucide-react'
+import { MapPin, Sprout, Tractor, ChevronLeft, Leaf, Map } from 'lucide-react'
 
 export default function ProdutorLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -23,6 +23,7 @@ export default function ProdutorLayout({ children }: { children: React.ReactNode
     { href: '/produtor/propriedades',           label: 'Propriedades',        icon: MapPin,  exact: false },
     { href: '/produtor/safras',                 label: 'Safras & Custos',     icon: Sprout,  exact: false },
     { href: '/produtor/cotacoes-insumos',       label: 'Cotações de Insumos', icon: Leaf,    exact: false },
+    { href: '/produtor/mapas', label: 'Mapas & Talhões', icon: Map, exact: false },
   ]
 
   return (
