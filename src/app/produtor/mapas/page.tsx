@@ -1,9 +1,9 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { usePropriedade } from '@/contexts/PropriedadeContext'   
+import { usePropriedade } from '@/contexts/PropriedadeContext'
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import { Trash2, Plus, Save, Map, Layers } from 'lucide-react'
+import { Trash2, Plus, Save, Map, Layers, Satellite, Navigation, X } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -14,6 +14,19 @@ interface Talhao {
 }
 
 const CORES = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899']
+
+const TILE_LAYERS = {
+  normal: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19,
+  },
+  satellite: {
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    attribution: '© Esri, Maxar, Earthstar Geographics',
+    maxZoom: 19,
+  },
+}
 
 function calcArea(coords: Coord[]): number {
   if (coords.length < 3) return 0
@@ -37,6 +50,7 @@ export default function MapasPage() {
   const drawnGroup = useRef<any>(null)
   const tempPoly = useRef<any>(null)
   const tempMarks = useRef<any[]>([])
+  const tileLayerRef = useRef<any>(null)
   const drawingRef = useRef(false)
   const corRef = useRef(CORES[0])
   const ptsRef = useRef<Coord[]>([])
@@ -50,6 +64,10 @@ export default function MapasPage() {
   const [salvando, setSalvando] = useState(false)
   const [mapReady, setMapReady] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [satellite, setSatellite] = useState(false)
+  const [manualLat, setManualLat] = useState('')
+  const [manualLng, setManualLng] = useState('')
+  const [manualError, setManualError] = useState('')
 
   const fazenda = propriedades?.find((p: any) => String(p.id) === String(propriedadeId))?.nome
 
@@ -77,31 +95,76 @@ export default function MapasPage() {
     if (!mapReady || !mapRef.current || mapInst.current) return
     const L = (window as any).L
     const map = L.map(mapRef.current).setView([-15.78, -47.93], 5)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors', maxZoom: 19,
+    const layer = L.tileLayer(TILE_LAYERS.normal.url, {
+      attribution: TILE_LAYERS.normal.attribution,
+      maxZoom: TILE_LAYERS.normal.maxZoom,
     }).addTo(map)
+    tileLayerRef.current = layer
     drawnGroup.current = L.featureGroup().addTo(map)
     mapInst.current = map
 
     map.on('click', (e: any) => {
       if (!drawingRef.current) return
-      const L2 = (window as any).L
-      const pt = { lat: e.latlng.lat, lng: e.latlng.lng }
-      const mk = L2.circleMarker([pt.lat, pt.lng], {
-        radius: 5, color: corRef.current, fillOpacity: 1, weight: 1,
-      }).addTo(map)
-      tempMarks.current.push(mk)
-      ptsRef.current = [...ptsRef.current, pt]
-      setPts([...ptsRef.current])
-      if (tempPoly.current) map.removeLayer(tempPoly.current)
-      if (ptsRef.current.length >= 2) {
-        tempPoly.current = L2.polygon(
-          ptsRef.current.map((c) => [c.lat, c.lng]),
-          { color: corRef.current, fillOpacity: 0.2, dashArray: '6,4', weight: 2 }
-        ).addTo(map)
-      }
+      addPoint({ lat: e.latlng.lat, lng: e.latlng.lng })
     })
   }, [mapReady])
+
+  useEffect(() => {
+    if (!mapReady || !mapInst.current || !tileLayerRef.current) return
+    const L = (window as any).L
+    mapInst.current.removeLayer(tileLayerRef.current)
+    const cfg = satellite ? TILE_LAYERS.satellite : TILE_LAYERS.normal
+    tileLayerRef.current = L.tileLayer(cfg.url, { attribution: cfg.attribution, maxZoom: cfg.maxZoom })
+      .addTo(mapInst.current)
+  }, [satellite, mapReady])
+
+  const addPoint = (pt: Coord) => {
+    const L = (window as any).L
+    const map = mapInst.current
+    const mk = L.circleMarker([pt.lat, pt.lng], {
+      radius: 5, color: corRef.current, fillOpacity: 1, weight: 1,
+    }).addTo(map)
+    tempMarks.current.push(mk)
+    ptsRef.current = [...ptsRef.current, pt]
+    setPts([...ptsRef.current])
+    if (tempPoly.current) map.removeLayer(tempPoly.current)
+    if (ptsRef.current.length >= 2) {
+      tempPoly.current = L.polygon(
+        ptsRef.current.map((c) => [c.lat, c.lng]),
+        { color: corRef.current, fillOpacity: 0.2, dashArray: '6,4', weight: 2 }
+      ).addTo(map)
+    }
+  }
+
+  const adicionarManual = () => {
+    const lat = parseFloat(manualLat.replace(',', '.'))
+    const lng = parseFloat(manualLng.replace(',', '.'))
+    if (isNaN(lat) || lat < -90 || lat > 90) { setManualError('Latitude inválida (-90 a 90)'); return }
+    if (isNaN(lng) || lng < -180 || lng > 180) { setManualError('Longitude inválida (-180 a 180)'); return }
+    setManualError('')
+    addPoint({ lat, lng })
+    mapInst.current?.setView([lat, lng], Math.max(mapInst.current.getZoom(), 12))
+    setManualLat('')
+    setManualLng('')
+  }
+
+  const removerUltimoPonto = () => {
+    if (ptsRef.current.length === 0) return
+    const last = tempMarks.current.pop()
+    if (last) mapInst.current?.removeLayer(last)
+    ptsRef.current = ptsRef.current.slice(0, -1)
+    setPts([...ptsRef.current])
+    if (tempPoly.current) mapInst.current?.removeLayer(tempPoly.current)
+    if (ptsRef.current.length >= 2) {
+      const L = (window as any).L
+      tempPoly.current = L.polygon(
+        ptsRef.current.map((c) => [c.lat, c.lng]),
+        { color: corRef.current, fillOpacity: 0.2, dashArray: '6,4', weight: 2 }
+      ).addTo(mapInst.current)
+    } else {
+      tempPoly.current = null
+    }
+  }
 
   const carregar = useCallback(async () => {
     try {
@@ -141,7 +204,7 @@ export default function MapasPage() {
     if (tempPoly.current && mapInst.current) { mapInst.current.removeLayer(tempPoly.current); tempPoly.current = null }
   }
 
-  const iniciar = () => { setDrawing(true); setPts([]); ptsRef.current = []; limparTemp() }
+  const iniciar = () => { setDrawing(true); setPts([]); ptsRef.current = []; limparTemp(); setManualLat(''); setManualLng(''); setManualError('') }
   const cancelar = () => { setDrawing(false); setPts([]); ptsRef.current = []; limparTemp() }
 
   const salvar = async () => {
@@ -174,9 +237,22 @@ export default function MapasPage() {
             : <p className="text-xs text-yellow-400 mt-0.5">Selecione uma propriedade no menu superior para filtrar talhões</p>
           }
         </div>
-        <span className="text-xs text-gray-400 flex items-center gap-1">
-          <Layers className="w-3.5 h-3.5" /> {talhoes.length} talhão(ões)
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSatellite((s) => !s)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+              satellite
+                ? 'bg-blue-700 border-blue-500 text-white'
+                : 'bg-[#0d1a0d] border-[#1a2e1a] text-gray-400 hover:text-white'
+            }`}
+          >
+            <Satellite className="w-3.5 h-3.5" />
+            {satellite ? 'Satélite' : 'Normal'}
+          </button>
+          <span className="text-xs text-gray-400 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5" /> {talhoes.length} talhão(ões)
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" style={{ height: '72vh' }}>
@@ -223,15 +299,60 @@ export default function MapasPage() {
                 <Plus className="w-3.5 h-3.5" /> Desenhar no Mapa
               </button>
             ) : (
-              <div className="flex gap-2">
-                <button onClick={cancelar}
-                  className="flex-1 text-xs py-2 rounded-lg border border-[#2a3a2a] text-gray-400 hover:text-white transition-colors">
-                  Cancelar
-                </button>
-                <button onClick={salvar} disabled={salvando || pts.length < 3}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors">
-                  <Save className="w-3 h-3" /> {salvando ? 'Salvando...' : 'Salvar'}
-                </button>
+              <div className="space-y-2">
+                <div className="bg-[#0a150a] border border-[#1a2e1a] rounded-lg p-2.5 space-y-2">
+                  <p className="text-xs text-gray-400 flex items-center gap-1">
+                    <Navigation className="w-3 h-3" /> Adicionar por coordenadas
+                  </p>
+                  <div className="flex gap-1.5">
+                    <input
+                      value={manualLat}
+                      onChange={(e) => { setManualLat(e.target.value); setManualError('') }}
+                      placeholder="Latitude"
+                      onKeyDown={(e) => e.key === 'Enter' && adicionarManual()}
+                      className="flex-1 bg-[#141e14] border border-[#1f2e1f] rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600"
+                    />
+                    <input
+                      value={manualLng}
+                      onChange={(e) => { setManualLng(e.target.value); setManualError('') }}
+                      placeholder="Longitude"
+                      onKeyDown={(e) => e.key === 'Enter' && adicionarManual()}
+                      className="flex-1 bg-[#141e14] border border-[#1f2e1f] rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600"
+                    />
+                    <button
+                      onClick={adicionarManual}
+                      disabled={!manualLat || !manualLng}
+                      className="px-2 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-xs text-white transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  {manualError && <p className="text-xs text-red-400">{manualError}</p>}
+                  {pts.length > 0 && (
+                    <div className="space-y-1 max-h-24 overflow-y-auto">
+                      {pts.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between text-xs text-gray-400">
+                          <span className="font-mono">{i + 1}. {p.lat.toFixed(5)}, {p.lng.toFixed(5)}</span>
+                          {i === pts.length - 1 && (
+                            <button onClick={removerUltimoPonto} className="text-red-500 hover:text-red-400 ml-1">
+                              <X className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={cancelar}
+                    className="flex-1 text-xs py-2 rounded-lg border border-[#2a3a2a] text-gray-400 hover:text-white transition-colors">
+                    Cancelar
+                  </button>
+                  <button onClick={salvar} disabled={salvando || pts.length < 3}
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors">
+                    <Save className="w-3 h-3" /> {salvando ? 'Salvando...' : 'Salvar'}
+                  </button>
+                </div>
               </div>
             )}
           </div>
