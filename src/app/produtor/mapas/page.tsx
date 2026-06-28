@@ -51,7 +51,7 @@ function parseKml(text: string): { nome: string; coords: Coord[] }[] {
   for (const pm of placemarks) {
     const nomeEl = pm.querySelector('name')
     const nome = nomeEl?.textContent?.trim() || 'Talhão importado'
-    const coordEls = pm.querySelectorAll('coordinates')
+    const coordEls = Array.from(pm.querySelectorAll('coordinates'))
     for (const coordEl of coordEls) {
       const raw = coordEl.textContent?.trim() || ''
       const coords: Coord[] = []
