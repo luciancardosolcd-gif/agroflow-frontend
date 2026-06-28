@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { usePropriedade } from '@/contexts/PropriedadeContext'
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import { Trash2, Plus, Save, Map, Layers, Satellite, Navigation, X } from 'lucide-react'
+import { Trash2, Plus, Save, Map, Layers, Satellite, Navigation, X, Upload } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -43,6 +43,32 @@ function calcArea(coords: Coord[]): number {
   return Math.abs((area * R * R) / 2) / 10000
 }
 
+function parseKml(text: string): { nome: string; coords: Coord[] }[] {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(text, 'application/xml')
+  const placemarks = Array.from(doc.querySelectorAll('Placemark'))
+  const results: { nome: string; coords: Coord[] }[] = []
+  for (const pm of placemarks) {
+    const nomeEl = pm.querySelector('name')
+    const nome = nomeEl?.textContent?.trim() || 'Talhão importado'
+    const coordEls = pm.querySelectorAll('coordinates')
+    for (const coordEl of coordEls) {
+      const raw = coordEl.textContent?.trim() || ''
+      const coords: Coord[] = []
+      for (const token of raw.split(/\s+/)) {
+        const parts = token.split(',')
+        if (parts.length >= 2) {
+          const lng = parseFloat(parts[0])
+          const lat = parseFloat(parts[1])
+          if (!isNaN(lat) && !isNaN(lng)) coords.push({ lat, lng })
+        }
+      }
+      if (coords.length >= 3) results.push({ nome, coords })
+    }
+  }
+  return results
+}
+
 export default function MapasPage() {
   const { propriedadeId, propriedades } = usePropriedade()
   const mapRef = useRef<HTMLDivElement>(null)
@@ -54,6 +80,7 @@ export default function MapasPage() {
   const drawingRef = useRef(false)
   const corRef = useRef(CORES[0])
   const ptsRef = useRef<Coord[]>([])
+  const kmlInputRef = useRef<HTMLInputElement>(null)
 
   const [talhoes, setTalhoes] = useState<Talhao[]>([])
   const [drawing, setDrawing] = useState(false)
@@ -68,6 +95,8 @@ export default function MapasPage() {
   const [manualLat, setManualLat] = useState('')
   const [manualLng, setManualLng] = useState('')
   const [manualError, setManualError] = useState('')
+  const [kmlError, setKmlError] = useState('')
+  const [kmlImporting, setKmlImporting] = useState(false)
 
   const fazenda = propriedades?.find((p: any) => String(p.id) === String(propriedadeId))?.nome
 
@@ -136,6 +165,74 @@ export default function MapasPage() {
     }
   }
 
+  const limparTemp = () => {
+    tempMarks.current.forEach((m) => mapInst.current?.removeLayer(m))
+    tempMarks.current = []
+    if (tempPoly.current && mapInst.current) { mapInst.current.removeLayer(tempPoly.current); tempPoly.current = null }
+  }
+
+  const loadPointsBatch = (coords: Coord[]) => {
+    const L = (window as any).L
+    const map = mapInst.current
+    if (!L || !map) return
+    limparTemp()
+    ptsRef.current = []
+    const marks: any[] = []
+    for (const pt of coords) {
+      const mk = L.circleMarker([pt.lat, pt.lng], {
+        radius: 4, color: corRef.current, fillOpacity: 1, weight: 1,
+      }).addTo(map)
+      marks.push(mk)
+    }
+    tempMarks.current = marks
+    ptsRef.current = [...coords]
+    setPts([...coords])
+    if (coords.length >= 2) {
+      tempPoly.current = L.polygon(
+        coords.map((c) => [c.lat, c.lng]),
+        { color: corRef.current, fillOpacity: 0.2, dashArray: '6,4', weight: 2 }
+      ).addTo(map)
+    }
+    try {
+      const bounds = L.latLngBounds(coords.map((c) => [c.lat, c.lng]))
+      map.fitBounds(bounds, { padding: [40, 40] })
+    } catch {}
+  }
+
+  const handleKmlFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setKmlError('')
+    setKmlImporting(true)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const text = ev.target?.result as string
+        const parsed = parseKml(text)
+        if (parsed.length === 0) {
+          setKmlError('Nenhum polígono encontrado no arquivo KML.')
+          setKmlImporting(false)
+          return
+        }
+        const first = parsed[0]
+        setNome((prev) => prev || first.nome)
+        setDrawing(true)
+        setTimeout(() => {
+          loadPointsBatch(first.coords)
+          if (parsed.length > 1) {
+            setKmlError(`${parsed.length} polígonos encontrados. Carregado o 1º: "${first.nome}". Salve e repita para os demais.`)
+          }
+          setKmlImporting(false)
+        }, 100)
+      } catch {
+        setKmlError('Erro ao processar o arquivo KML.')
+        setKmlImporting(false)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   const adicionarManual = () => {
     const lat = parseFloat(manualLat.replace(',', '.'))
     const lng = parseFloat(manualLng.replace(',', '.'))
@@ -198,14 +295,8 @@ export default function MapasPage() {
     }
   }, [talhoes, mapReady])
 
-  const limparTemp = () => {
-    tempMarks.current.forEach((m) => mapInst.current?.removeLayer(m))
-    tempMarks.current = []
-    if (tempPoly.current && mapInst.current) { mapInst.current.removeLayer(tempPoly.current); tempPoly.current = null }
-  }
-
-  const iniciar = () => { setDrawing(true); setPts([]); ptsRef.current = []; limparTemp(); setManualLat(''); setManualLng(''); setManualError('') }
-  const cancelar = () => { setDrawing(false); setPts([]); ptsRef.current = []; limparTemp() }
+  const iniciar = () => { setDrawing(true); setPts([]); ptsRef.current = []; limparTemp(); setManualLat(''); setManualLng(''); setManualError(''); setKmlError('') }
+  const cancelar = () => { setDrawing(false); setPts([]); ptsRef.current = []; limparTemp(); setKmlError('') }
 
   const salvar = async () => {
     if (!nome.trim()) { alert('Informe o nome do talhão'); return }
@@ -293,6 +384,24 @@ export default function MapasPage() {
                 className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600 resize-none" />
             </div>
             {pts.length >= 3 && <p className="text-xs text-green-400">Área estimada: {calcArea(pts).toFixed(2)} ha</p>}
+
+            <input
+              ref={kmlInputRef}
+              type="file"
+              accept=".kml,.kmz"
+              className="hidden"
+              onChange={handleKmlFile}
+            />
+            <button
+              onClick={() => kmlInputRef.current?.click()}
+              disabled={kmlImporting}
+              className="w-full flex items-center justify-center gap-2 bg-[#0a150a] hover:bg-[#112011] border border-[#2a3a2a] hover:border-green-700 text-gray-300 hover:text-white text-xs font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              {kmlImporting ? 'Importando...' : 'Importar KML'}
+            </button>
+            {kmlError && <p className="text-xs text-yellow-400">{kmlError}</p>}
+
             {!drawing ? (
               <button onClick={iniciar}
                 className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-600 text-white text-xs font-medium py-2 rounded-lg transition-colors">
