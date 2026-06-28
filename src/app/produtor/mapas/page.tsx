@@ -75,7 +75,7 @@ export default function MapasPage() {
   useEffect(() => { corRef.current = cor }, [cor])
   useEffect(() => { ptsRef.current = pts }, [pts])
 
-  const token = () => { try { return JSON.parse(Cookies.get('user') || '{}').token } catch { return '' } }
+  const token = () => Cookies.get('accessToken') || ''
   const hdrs = () => ({ Authorization: `Bearer ${token()}` })
 
   useEffect(() => {
