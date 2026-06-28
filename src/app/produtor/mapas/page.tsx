@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { usePropriedade } from '@/contexts/PropriedadeContext'
 import axios from 'axios'
 import Cookies from 'js-cookie'
-import { Trash2, Plus, Save, Map, Layers, Satellite, Navigation, X, Upload } from 'lucide-react'
+import { Trash2, Plus, Save, Map, Layers, Satellite, Navigation, X, Upload, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
@@ -97,6 +97,15 @@ export default function MapasPage() {
   const [manualError, setManualError] = useState('')
   const [kmlError, setKmlError] = useState('')
   const [kmlImporting, setKmlImporting] = useState(false)
+
+  // Edit state
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editNome, setEditNome] = useState('')
+  const [editCor, setEditCor] = useState(CORES[0])
+  const [editObs, setEditObs] = useState('')
+  const [editCoords, setEditCoords] = useState<Coord[]>([])
+  const [editSalvando, setEditSalvando] = useState(false)
+  const [showCoords, setShowCoords] = useState(false)
 
   const fazenda = propriedades?.find((p: any) => String(p.id) === String(propriedadeId))?.nome
 
@@ -287,7 +296,7 @@ export default function MapasPage() {
         `<b>${t.nome}</b>${t.area_hectares ? '<br/>' + Number(t.area_hectares).toFixed(2) + ' ha' : ''}`,
         { permanent: false, direction: 'center' }
       )
-      poly.on('click', () => setSelectedId(t.id))
+      poly.on('click', () => { setSelectedId(t.id); setEditId(null) })
       drawnGroup.current.addLayer(poly)
     })
     if (talhoes.length > 0 && drawnGroup.current.getLayers().length > 0) {
@@ -295,7 +304,7 @@ export default function MapasPage() {
     }
   }, [talhoes, mapReady])
 
-  const iniciar = () => { setDrawing(true); setPts([]); ptsRef.current = []; limparTemp(); setManualLat(''); setManualLng(''); setManualError(''); setKmlError('') }
+  const iniciar = () => { setDrawing(true); setPts([]); ptsRef.current = []; limparTemp(); setManualLat(''); setManualLng(''); setManualError(''); setKmlError(''); setEditId(null) }
   const cancelar = () => { setDrawing(false); setPts([]); ptsRef.current = []; limparTemp(); setKmlError('') }
 
   const salvar = async () => {
@@ -312,8 +321,48 @@ export default function MapasPage() {
 
   const excluir = async (id: string) => {
     if (!confirm('Excluir este talhão?')) return
-    try { await axios.delete(`${API}/talhoes/${id}`, { headers: hdrs() }); setSelectedId(null); await carregar() }
+    try { await axios.delete(`${API}/talhoes/${id}`, { headers: hdrs() }); setSelectedId(null); setEditId(null); await carregar() }
     catch { alert('Erro ao excluir') }
+  }
+
+  const abrirEdicao = (t: Talhao) => {
+    setEditId(t.id)
+    setEditNome(t.nome)
+    setEditCor(t.cor || CORES[0])
+    setEditObs(t.observacoes || '')
+    setEditCoords(t.coordenadas || [])
+    setShowCoords(false)
+    setSelectedId(t.id)
+    setDrawing(false)
+    limparTemp()
+  }
+
+  const cancelarEdicao = () => {
+    setEditId(null)
+    setEditNome('')
+    setEditCoords([])
+    setShowCoords(false)
+  }
+
+  const removerCoordenada = (idx: number) => {
+    setEditCoords((prev) => prev.filter((_, i) => i !== idx))
+  }
+
+  const salvarEdicao = async () => {
+    if (!editNome.trim()) { alert('Informe o nome do talhão'); return }
+    if (editCoords.length < 3) { alert('O talhão precisa ter pelo menos 3 coordenadas'); return }
+    setEditSalvando(true)
+    try {
+      await axios.patch(`${API}/talhoes/${editId}`, {
+        nome: editNome.trim(),
+        cor: editCor,
+        observacoes: editObs.trim() || undefined,
+        coordenadas: editCoords,
+        area_hectares: calcArea(editCoords),
+      }, { headers: hdrs() })
+      cancelarEdicao()
+      await carregar()
+    } catch { alert('Erro ao salvar edição') } finally { setEditSalvando(false) }
   }
 
   return (
@@ -362,109 +411,182 @@ export default function MapasPage() {
         </div>
 
         <div className="flex flex-col gap-3 overflow-y-auto">
-          <div className="bg-[#0d1a0d] border border-[#1a2e1a] rounded-xl p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-white">Novo Talhão</h2>
-            <div>
-              <label className="text-xs text-gray-400">Nome *</label>
-              <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Talhão A"
-                className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600" />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400">Cor</label>
-              <div className="flex gap-1.5 mt-1 flex-wrap">
-                {CORES.map((c) => (
-                  <button key={c} onClick={() => setCor(c)} style={{ background: c }}
-                    className={`w-6 h-6 rounded-full border-2 transition-all ${cor === c ? 'border-white scale-110' : 'border-transparent'}`} />
-                ))}
+          {/* Edit panel */}
+          {editId ? (
+            <div className="bg-[#0d1a0d] border border-yellow-700/50 rounded-xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-yellow-300 flex items-center gap-1.5">
+                  <Pencil className="w-3.5 h-3.5" /> Editar Talhão
+                </h2>
+                <button onClick={cancelarEdicao} className="text-gray-500 hover:text-white">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            </div>
-            <div>
-              <label className="text-xs text-gray-400">Observações</label>
-              <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} placeholder="Opcional..."
-                className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600 resize-none" />
-            </div>
-            {pts.length >= 3 && <p className="text-xs text-green-400">Área estimada: {calcArea(pts).toFixed(2)} ha</p>}
-
-            <input
-              ref={kmlInputRef}
-              type="file"
-              accept=".kml,.kmz"
-              className="hidden"
-              onChange={handleKmlFile}
-            />
-            <button
-              onClick={() => kmlInputRef.current?.click()}
-              disabled={kmlImporting}
-              className="w-full flex items-center justify-center gap-2 bg-[#0a150a] hover:bg-[#112011] border border-[#2a3a2a] hover:border-green-700 text-gray-300 hover:text-white text-xs font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <Upload className="w-3.5 h-3.5" />
-              {kmlImporting ? 'Importando...' : 'Importar KML'}
-            </button>
-            {kmlError && <p className="text-xs text-yellow-400">{kmlError}</p>}
-
-            {!drawing ? (
-              <button onClick={iniciar}
-                className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-600 text-white text-xs font-medium py-2 rounded-lg transition-colors">
-                <Plus className="w-3.5 h-3.5" /> Desenhar no Mapa
+              <div>
+                <label className="text-xs text-gray-400">Nome *</label>
+                <input value={editNome} onChange={(e) => setEditNome(e.target.value)}
+                  className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-600" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Cor</label>
+                <div className="flex gap-1.5 mt-1 flex-wrap">
+                  {CORES.map((c) => (
+                    <button key={c} onClick={() => setEditCor(c)} style={{ background: c }}
+                      className={`w-6 h-6 rounded-full border-2 transition-all ${editCor === c ? 'border-white scale-110' : 'border-transparent'}`} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Observações</label>
+                <textarea value={editObs} onChange={(e) => setEditObs(e.target.value)} rows={2}
+                  className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-yellow-600 resize-none" />
+              </div>
+              <div>
+                <button
+                  onClick={() => setShowCoords((v) => !v)}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors w-full"
+                >
+                  {showCoords ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  Coordenadas ({editCoords.length} pontos)
+                  {editCoords.length < 3 && <span className="text-red-400 ml-1">— mín. 3</span>}
+                </button>
+                {showCoords && (
+                  <div className="mt-2 space-y-1 max-h-40 overflow-y-auto bg-[#0a150a] rounded-lg p-2">
+                    {editCoords.length === 0 && <p className="text-xs text-gray-600 text-center py-2">Nenhuma coordenada</p>}
+                    {editCoords.map((c, i) => (
+                      <div key={i} className="flex items-center justify-between gap-1 text-xs text-gray-400">
+                        <span className="font-mono truncate">{i + 1}. {c.lat.toFixed(5)}, {c.lng.toFixed(5)}</span>
+                        <button
+                          onClick={() => removerCoordenada(i)}
+                          disabled={editCoords.length <= 3}
+                          className="text-red-500 hover:text-red-400 disabled:opacity-30 flex-shrink-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {editCoords.length >= 3 && (
+                  <p className="text-xs text-green-400 mt-1">Área: {calcArea(editCoords).toFixed(2)} ha</p>
+                )}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={cancelarEdicao}
+                  className="flex-1 text-xs py-2 rounded-lg border border-[#2a3a2a] text-gray-400 hover:text-white transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={salvarEdicao} disabled={editSalvando || editCoords.length < 3}
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-yellow-700 hover:bg-yellow-600 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors">
+                  <Save className="w-3 h-3" /> {editSalvando ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+              <button
+                onClick={() => excluir(editId)}
+                className="w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-lg border border-red-900/50 text-red-500 hover:bg-red-900/20 hover:text-red-400 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Excluir Talhão
               </button>
-            ) : (
-              <div className="space-y-2">
-                <div className="bg-[#0a150a] border border-[#1a2e1a] rounded-lg p-2.5 space-y-2">
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
-                    <Navigation className="w-3 h-3" /> Adicionar por coordenadas
-                  </p>
-                  <div className="flex gap-1.5">
-                    <input
-                      value={manualLat}
-                      onChange={(e) => { setManualLat(e.target.value); setManualError('') }}
-                      placeholder="Latitude"
-                      onKeyDown={(e) => e.key === 'Enter' && adicionarManual()}
-                      className="flex-1 bg-[#141e14] border border-[#1f2e1f] rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600"
-                    />
-                    <input
-                      value={manualLng}
-                      onChange={(e) => { setManualLng(e.target.value); setManualError('') }}
-                      placeholder="Longitude"
-                      onKeyDown={(e) => e.key === 'Enter' && adicionarManual()}
-                      className="flex-1 bg-[#141e14] border border-[#1f2e1f] rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600"
-                    />
-                    <button
-                      onClick={adicionarManual}
-                      disabled={!manualLat || !manualLng}
-                      className="px-2 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-xs text-white transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
+            </div>
+          ) : (
+            <div className="bg-[#0d1a0d] border border-[#1a2e1a] rounded-xl p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-white">Novo Talhão</h2>
+              <div>
+                <label className="text-xs text-gray-400">Nome *</label>
+                <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Talhão A"
+                  className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600" />
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Cor</label>
+                <div className="flex gap-1.5 mt-1 flex-wrap">
+                  {CORES.map((c) => (
+                    <button key={c} onClick={() => setCor(c)} style={{ background: c }}
+                      className={`w-6 h-6 rounded-full border-2 transition-all ${cor === c ? 'border-white scale-110' : 'border-transparent'}`} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs text-gray-400">Observações</label>
+                <textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={2} placeholder="Opcional..."
+                  className="mt-1 w-full bg-[#141e14] border border-[#1f2e1f] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600 resize-none" />
+              </div>
+              {pts.length >= 3 && <p className="text-xs text-green-400">Área estimada: {calcArea(pts).toFixed(2)} ha</p>}
+
+              <input ref={kmlInputRef} type="file" accept=".kml,.kmz" className="hidden" onChange={handleKmlFile} />
+              <button
+                onClick={() => kmlInputRef.current?.click()}
+                disabled={kmlImporting}
+                className="w-full flex items-center justify-center gap-2 bg-[#0a150a] hover:bg-[#112011] border border-[#2a3a2a] hover:border-green-700 text-gray-300 hover:text-white text-xs font-medium py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                {kmlImporting ? 'Importando...' : 'Importar KML'}
+              </button>
+              {kmlError && <p className="text-xs text-yellow-400">{kmlError}</p>}
+
+              {!drawing ? (
+                <button onClick={iniciar}
+                  className="w-full flex items-center justify-center gap-2 bg-green-700 hover:bg-green-600 text-white text-xs font-medium py-2 rounded-lg transition-colors">
+                  <Plus className="w-3.5 h-3.5" /> Desenhar no Mapa
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="bg-[#0a150a] border border-[#1a2e1a] rounded-lg p-2.5 space-y-2">
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <Navigation className="w-3 h-3" /> Adicionar por coordenadas
+                    </p>
+                    <div className="flex gap-1.5">
+                      <input
+                        value={manualLat}
+                        onChange={(e) => { setManualLat(e.target.value); setManualError('') }}
+                        placeholder="Latitude"
+                        onKeyDown={(e) => e.key === 'Enter' && adicionarManual()}
+                        className="flex-1 bg-[#141e14] border border-[#1f2e1f] rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600"
+                      />
+                      <input
+                        value={manualLng}
+                        onChange={(e) => { setManualLng(e.target.value); setManualError('') }}
+                        placeholder="Longitude"
+                        onKeyDown={(e) => e.key === 'Enter' && adicionarManual()}
+                        className="flex-1 bg-[#141e14] border border-[#1f2e1f] rounded px-2 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-green-600"
+                      />
+                      <button
+                        onClick={adicionarManual}
+                        disabled={!manualLat || !manualLng}
+                        className="px-2 py-1.5 bg-green-800 hover:bg-green-700 disabled:opacity-40 rounded text-xs text-white transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    {manualError && <p className="text-xs text-red-400">{manualError}</p>}
+                    {pts.length > 0 && (
+                      <div className="space-y-1 max-h-24 overflow-y-auto">
+                        {pts.map((p, i) => (
+                          <div key={i} className="flex items-center justify-between text-xs text-gray-400">
+                            <span className="font-mono">{i + 1}. {p.lat.toFixed(5)}, {p.lng.toFixed(5)}</span>
+                            {i === pts.length - 1 && (
+                              <button onClick={removerUltimoPonto} className="text-red-500 hover:text-red-400 ml-1">
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={cancelar}
+                      className="flex-1 text-xs py-2 rounded-lg border border-[#2a3a2a] text-gray-400 hover:text-white transition-colors">
+                      Cancelar
+                    </button>
+                    <button onClick={salvar} disabled={salvando || pts.length < 3}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors">
+                      <Save className="w-3 h-3" /> {salvando ? 'Salvando...' : 'Salvar'}
                     </button>
                   </div>
-                  {manualError && <p className="text-xs text-red-400">{manualError}</p>}
-                  {pts.length > 0 && (
-                    <div className="space-y-1 max-h-24 overflow-y-auto">
-                      {pts.map((p, i) => (
-                        <div key={i} className="flex items-center justify-between text-xs text-gray-400">
-                          <span className="font-mono">{i + 1}. {p.lat.toFixed(5)}, {p.lng.toFixed(5)}</span>
-                          {i === pts.length - 1 && (
-                            <button onClick={removerUltimoPonto} className="text-red-500 hover:text-red-400 ml-1">
-                              <X className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={cancelar}
-                    className="flex-1 text-xs py-2 rounded-lg border border-[#2a3a2a] text-gray-400 hover:text-white transition-colors">
-                    Cancelar
-                  </button>
-                  <button onClick={salvar} disabled={salvando || pts.length < 3}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-green-700 hover:bg-green-600 disabled:opacity-50 text-white text-xs font-medium py-2 rounded-lg transition-colors">
-                    <Save className="w-3 h-3" /> {salvando ? 'Salvando...' : 'Salvar'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <div className="bg-[#0d1a0d] border border-[#1a2e1a] rounded-xl p-4 flex-1 overflow-y-auto">
             <h2 className="text-sm font-semibold text-white mb-3">Talhões Cadastrados</h2>
@@ -473,17 +595,28 @@ export default function MapasPage() {
             ) : (
               <div className="space-y-2">
                 {talhoes.map((t) => (
-                  <div key={t.id} onClick={() => setSelectedId(selectedId === t.id ? null : t.id)}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                  <div key={t.id}
+                    className={`flex items-center gap-2.5 p-2.5 rounded-lg border transition-all ${
+                      editId === t.id ? 'border-yellow-700/70 bg-yellow-900/10' :
                       selectedId === t.id ? 'border-green-600 bg-green-900/20' : 'border-[#1f2e1f] hover:border-[#2a3e2a]'
                     }`}>
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: t.cor || '#22c55e' }} />
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setSelectedId(selectedId === t.id ? null : t.id)}>
                       <p className="text-xs font-medium text-white truncate">{t.nome}</p>
                       {t.area_hectares && <p className="text-xs text-gray-500">{Number(t.area_hectares).toFixed(2)} ha</p>}
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); excluir(t.id) }}
-                      className="p-1 rounded text-gray-600 hover:text-red-400 transition-colors flex-shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); abrirEdicao(t) }}
+                      className="p-1 rounded text-gray-600 hover:text-yellow-400 transition-colors flex-shrink-0"
+                      title="Editar"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); excluir(t.id) }}
+                      className="p-1 rounded text-gray-600 hover:text-red-400 transition-colors flex-shrink-0"
+                      title="Excluir"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
