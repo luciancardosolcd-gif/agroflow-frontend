@@ -10,8 +10,6 @@ import {
   Leaf, BarChart3
 } from 'lucide-react'
 
-const LOGO_SRC = "..." // ← mantenha aqui o valor base64 original do seu arquivo
-
 const COMMODITIES = [
   { key: 'soja',      label: 'Soja',      unidade: 'R$/sc 60kg', cor: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5' },
   { key: 'milho',     label: 'Milho',     unidade: 'R$/sc 60kg', cor: 'text-orange-400', bg: 'border-orange-500/20 bg-orange-500/5' },
@@ -53,6 +51,28 @@ const ALL_NAV = [
   { href: '/relatorios', label: 'Relatórios',        modulo: 'relatorios',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
   { href: '/users',      label: 'Usuários',          modulo: null,           perfis: ['admin'] },
 ]
+
+function AgroFlowLogo() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="44" height="44" rx="10" fill="#0d1a0d"/>
+        {/* Caule */}
+        <line x1="22" y1="36" x2="22" y2="18" stroke="#15803d" strokeWidth="2.2" strokeLinecap="round"/>
+        {/* Folha principal */}
+        <path d="M22 8C22 8 10 14 10 24C10 30.6 15.4 36 22 36C28.6 36 34 30.6 34 24C34 14 22 8 22 8Z" fill="#22c55e"/>
+        {/* Nervura esquerda */}
+        <path d="M22 26C19 23 14 21 11 18" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
+        {/* Nervura direita */}
+        <path d="M22 22C25 19 29 18 33 16" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
+      </svg>
+      <div>
+        <p className="text-xl font-bold text-white leading-none tracking-tight">AgroFlow</p>
+        <p className="text-[11px] text-green-500 leading-none mt-0.5 tracking-wide">Gestão Agrícola</p>
+      </div>
+    </div>
+  )
+}
 
 export default function DashboardPage() {
   const router   = useRouter()
@@ -149,12 +169,8 @@ export default function DashboardPage() {
         </div>
 
         {/* Logo no canto superior direito */}
-        <div className="flex-shrink-0 ml-6">
-          <img
-            src={LOGO_SRC}
-            alt="AgroFlow"
-            style={{ height: '78px', width: 'auto', objectFit: 'contain', display: 'block' }}
-          />
+        <div className="flex-shrink-0 ml-6 mt-1">
+          <AgroFlowLogo />
         </div>
       </div>
 
