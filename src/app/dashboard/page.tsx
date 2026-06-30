@@ -6,7 +6,7 @@ import api from '@/lib/api'
 import {
   Users, UserCheck, Package, FileText,
   TrendingUp, TrendingDown, CloudRain, Thermometer,
-  Wind, Droplets, Activity, AlertTriangle, RefreshCw, 
+  Wind, Droplets, Activity, AlertTriangle, RefreshCw,
   Leaf, BarChart3
 } from 'lucide-react'
 
@@ -39,36 +39,32 @@ const gerarClima = () => ({
 })
 
 const ALL_NAV = [
-  { href: '/dashboard',  label: 'Início',          modulo: null,           perfis: ['admin','gestor','operador','agronomo','visitante','produtor'] },
-  { href: '/clientes',   label: 'Clientes',         modulo: 'clientes',     perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/financeiro', label: 'Financeiro',        modulo: 'financeiro',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/contratos',  label: 'Contratos',         modulo: 'contratos',    perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/estoque',    label: 'Estoque',           modulo: 'estoque',      perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/fornecedores',label:'Fornecedores',      modulo: 'fornecedores', perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/maquinarios',label: 'Maquinários',       modulo: 'maquinarios',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/documentos', label: 'Documentos',        modulo: 'documentos',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/produtor',   label: 'Painel Produtor',   modulo: 'produtor',     perfis: ['admin','produtor','agronomo','visitante'] },
-  { href: '/relatorios', label: 'Relatórios',        modulo: 'relatorios',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/users',      label: 'Usuários',          modulo: null,           perfis: ['admin'] },
+  { href: '/dashboard',   label: 'Início',         modulo: null,           perfis: ['admin','gestor','operador','agronomo','visitante','produtor'] },
+  { href: '/clientes',    label: 'Clientes',        modulo: 'clientes',     perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/financeiro',  label: 'Financeiro',      modulo: 'financeiro',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/contratos',   label: 'Contratos',       modulo: 'contratos',    perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/estoque',     label: 'Estoque',         modulo: 'estoque',      perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/fornecedores',label: 'Fornecedores',    modulo: 'fornecedores', perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/maquinarios', label: 'Maquinários',     modulo: 'maquinarios',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/documentos',  label: 'Documentos',      modulo: 'documentos',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/produtor',    label: 'Painel Produtor', modulo: 'produtor',     perfis: ['admin','produtor','agronomo','visitante'] },
+  { href: '/relatorios',  label: 'Relatórios',      modulo: 'relatorios',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/users',       label: 'Usuários',        modulo: null,           perfis: ['admin'] },
 ]
 
 function AgroFlowLogo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <div className="flex items-center gap-3">
+      <svg width="48" height="48" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
         <rect width="44" height="44" rx="10" fill="#0d1a0d"/>
-        {/* Caule */}
         <line x1="22" y1="36" x2="22" y2="18" stroke="#15803d" strokeWidth="2.2" strokeLinecap="round"/>
-        {/* Folha principal */}
         <path d="M22 8C22 8 10 14 10 24C10 30.6 15.4 36 22 36C28.6 36 34 30.6 34 24C34 14 22 8 22 8Z" fill="#22c55e"/>
-        {/* Nervura esquerda */}
         <path d="M22 26C19 23 14 21 11 18" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
-        {/* Nervura direita */}
         <path d="M22 22C25 19 29 18 33 16" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
       </svg>
       <div>
-        <p className="text-xl font-bold text-white leading-none tracking-tight">AgroFlow</p>
-        <p className="text-[11px] text-green-500 leading-none mt-0.5 tracking-wide">Gestão Agrícola</p>
+        <p className="text-2xl font-bold text-white leading-none tracking-tight">AgroFlow</p>
+        <p className="text-xs text-green-500 leading-none mt-1 tracking-wide">Gestão Agrícola</p>
       </div>
     </div>
   )
@@ -135,46 +131,40 @@ export default function DashboardPage() {
   return (
     <div className="space-y-5">
 
-      {/* ── Cabeçalho da página com logo no canto direito ── */}
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-green-600 text-sm mb-3">Visão geral do sistema AgroFlow</p>
+      {/* Logo em destaque no topo */}
+      <div className="flex items-center justify-between pb-4 border-b border-[#1a2e1a]">
+        <AgroFlowLogo />
+        <p className="text-green-600 text-sm">Visão geral do sistema AgroFlow</p>
+      </div>
 
-          {/* Barra horizontal de navegação */}
-          <div className="w-full overflow-x-auto scrollbar-none">
-            <div className="flex items-center border-b border-white/8 min-w-max">
-              {navVisivel.map(item => {
-                const active = pathname === item.href
-                return (
-                  <button
-                    key={item.href}
-                    onClick={() => router.push(item.href)}
-                    className={`
-                      relative px-4 py-2.5 text-sm font-medium
-                      transition-all duration-200 whitespace-nowrap select-none
-                      ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
-                    `}
-                  >
-                    {item.label}
-                    <span className={`
-                      absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
-                      transition-all duration-300
-                      ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
-                    `}/>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Logo no canto superior direito */}
-        <div className="flex-shrink-0 ml-6 mt-1">
-          <AgroFlowLogo />
+      {/* Barra horizontal de navegação */}
+      <div className="w-full overflow-x-auto scrollbar-none">
+        <div className="flex items-center border-b border-white/8 min-w-max">
+          {navVisivel.map(item => {
+            const active = pathname === item.href
+            return (
+              <button
+                key={item.href}
+                onClick={() => router.push(item.href)}
+                className={`
+                  relative px-4 py-2.5 text-sm font-medium
+                  transition-all duration-200 whitespace-nowrap select-none
+                  ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
+                `}
+              >
+                {item.label}
+                <span className={`
+                  absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
+                  transition-all duration-300
+                  ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
+                `}/>
+              </button>
+            )
+          })}
         </div>
       </div>
 
-      {/* ── Stats ── */}
+      {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: 'Usuários',  value: stats.users,     icon: Users,     color: 'text-pink-400',   modulo: null },
@@ -196,7 +186,7 @@ export default function DashboardPage() {
           ))}
       </div>
 
-      {/* ── CotaçãoFlow ── */}
+      {/* CotaçãoFlow */}
       <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/3 p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -233,7 +223,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Clima + Monitoramento ── */}
+      {/* Clima + Monitoramento */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-blue-500/20 bg-blue-500/3 p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -272,10 +262,10 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-3">
             {[
-              { icon: AlertTriangle, label: 'Pragas e Doenças',            color: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5', badge: 'bg-yellow-900/40 text-yellow-400 border-yellow-800/40' },
-              { icon: Droplets,      label: 'Irrigação',                    color: 'text-blue-400',   bg: 'border-blue-500/20 bg-blue-500/5',     badge: 'bg-blue-900/40 text-blue-400 border-blue-800/40' },
-              { icon: Leaf,          label: 'Desenvolvimento das Culturas',  color: 'text-green-400',  bg: 'border-green-500/20 bg-green-500/5',   badge: 'bg-green-900/40 text-green-400 border-green-800/40' },
-              { icon: BarChart3,     label: 'Produtividade por Talhão',     color: 'text-purple-400', bg: 'border-purple-500/20 bg-purple-500/5', badge: 'bg-purple-900/40 text-purple-400 border-purple-800/40' },
+              { icon: AlertTriangle, label: 'Pragas e Doenças',           color: 'text-yellow-400', bg: 'border-yellow-500/20 bg-yellow-500/5', badge: 'bg-yellow-900/40 text-yellow-400 border-yellow-800/40' },
+              { icon: Droplets,      label: 'Irrigação',                   color: 'text-blue-400',   bg: 'border-blue-500/20 bg-blue-500/5',     badge: 'bg-blue-900/40 text-blue-400 border-blue-800/40' },
+              { icon: Leaf,          label: 'Desenvolvimento das Culturas', color: 'text-green-400',  bg: 'border-green-500/20 bg-green-500/5',   badge: 'bg-green-900/40 text-green-400 border-green-800/40' },
+              { icon: BarChart3,     label: 'Produtividade por Talhão',    color: 'text-purple-400', bg: 'border-purple-500/20 bg-purple-500/5', badge: 'bg-purple-900/40 text-purple-400 border-purple-800/40' },
             ].map(item => (
               <div key={item.label} className={`rounded-xl p-3 border ${item.bg} flex items-center justify-between`}>
                 <div className="flex items-center gap-2">
