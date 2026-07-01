@@ -17,33 +17,13 @@ interface CrudPageProps {
   title: string
   endpoint: string
   fields: FieldDef[]
-  icon: React.ReactNode
+  icon?: React.ReactNode
   fazendaId?: string
   safraId?: string
 }
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold text-white">{title}</h2>
-          <p className="text-xs text-green-600">
-            {items.length} registro{items.length !== 1 ? 's' : ''} encontrado{items.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={load} className="btn-secondary"><RefreshCw className="w-4 h-4" /></button>
-          {canCreate && (
-            <button onClick={handleNew} className="btn-primary">
-              <Plus className="w-4 h-4" />Novo
-            </button>
-          )}
-        </div>
-      </div>
-      {/* ... resto igual */}
-
 export default function CrudPage({
-  title, endpoint, fields, icon, fazendaId, safraId
+  title, endpoint, fields, fazendaId, safraId
 }: CrudPageProps) {
   const router = useRouter()
   const [items, setItems] = useState<Record<string, unknown>[]>([])
@@ -110,35 +90,24 @@ export default function CrudPage({
     }
   }, [endpoint, fazendaId, safraId])
 
-  useEffect(() => {
-    load()
-  }, [load])
+  useEffect(() => { load() }, [load])
 
-  const handleNew = () => {
-    if (isFinanceiro) router.push('/financeiro/novo')
-  }
-
+  const handleNew  = () => { if (isFinanceiro) router.push('/financeiro/novo') }
   const handleEdit = (item: Record<string, unknown>) => {
     if (isFinanceiro) router.push(`/financeiro/editar/${item.id}`)
   }
-
   const handleDelete = async (id: unknown) => {
     if (!confirm('Confirmar exclusão?')) return
-    try {
-      await api.delete(`${endpoint}/${id}`)
-      load()
-    } catch {}
+    try { await api.delete(`${endpoint}/${id}`); load() } catch {}
   }
 
   const filtered = items.filter(item =>
     fields.some(f => String(item[f.key] || '').toLowerCase().includes(search.toLowerCase()))
   )
-
   const displayFields = fields.slice(0, 4)
 
   const renderCell = (item: Record<string, unknown>, f: FieldDef) => {
     const val = String(item[f.key] || '-')
-
     if (f.key === 'tipo') {
       return (
         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -146,20 +115,14 @@ export default function CrudPage({
         }`}>{val}</span>
       )
     }
-
     if (f.key === 'status') {
       const colors: Record<string, string> = {
-        pago:        'bg-green-500/20 text-green-400',
-        pendente:    'bg-yellow-500/20 text-yellow-400',
+        pago: 'bg-green-500/20 text-green-400',
+        pendente: 'bg-yellow-500/20 text-yellow-400',
         'Em Aberto': 'bg-blue-500/20 text-blue-400',
       }
-      return (
-        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[val] || 'bg-gray-500/20 text-gray-400'}`}>
-          {val}
-        </span>
-      )
+      return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[val] || 'bg-gray-500/20 text-gray-400'}`}>{val}</span>
     }
-
     if (f.key === 'valor') {
       const num = parseFloat(val)
       if (!isNaN(num)) {
@@ -171,32 +134,23 @@ export default function CrudPage({
         )
       }
     }
-
     if ((f.type === 'date' || f.key === 'data' || f.key === 'dataVencimento') && val && val !== '-') {
       const date = new Date(val)
-      if (!isNaN(date.getTime())) {
-        return <span className="truncate block max-w-[200px]">{date.toLocaleDateString('pt-BR')}</span>
-      }
+      if (!isNaN(date.getTime())) return <span className="truncate block max-w-[200px]">{date.toLocaleDateString('pt-BR')}</span>
     }
-
     return <span className="truncate block max-w-[200px]">{val}</span>
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
-        {/* Logo + título no canto esquerdo */}
-        <div className="flex items-center gap-4">
-          <AgroFlowLogo />
-          <div className="w-px h-10 bg-[#1a2e1a]" />
-          <div>
-            <h1 className="font-display text-3xl text-green-100 flex items-center gap-3">{icon}{title}</h1>
-            <p className="text-green-600 mt-1">
-              {items.length} registro{items.length !== 1 ? 's' : ''} encontrado{items.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+        <div>
+          <h2 className="text-base font-semibold text-white">{title}</h2>
+          <p className="text-xs text-green-600">
+            {items.length} registro{items.length !== 1 ? 's' : ''} encontrado{items.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button onClick={load} className="btn-secondary"><RefreshCw className="w-4 h-4" /></button>
           {canCreate && (
             <button onClick={handleNew} className="btn-primary">
@@ -247,26 +201,20 @@ export default function CrudPage({
                     onClick={() => canEdit && handleEdit(item)}
                   >
                     {displayFields.map(f => (
-                      <td key={f.key} className="py-3 px-4 text-green-300">
-                        {renderCell(item, f)}
-                      </td>
+                      <td key={f.key} className="py-3 px-4 text-green-300">{renderCell(item, f)}</td>
                     ))}
                     {(canEdit || canDelete) && (
                       <td className="py-3 px-4" onClick={e => e.stopPropagation()}>
                         <div className="flex items-center justify-end gap-2">
                           {canEdit && (
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="w-8 h-8 bg-[#1a251a] hover:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 transition-colors border border-[#243324]"
-                            >
+                            <button onClick={() => handleEdit(item)}
+                              className="w-8 h-8 bg-[#1a251a] hover:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-green-400 transition-colors border border-[#243324]">
                               <Edit className="w-3.5 h-3.5" />
                             </button>
                           )}
                           {canDelete && (
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="w-8 h-8 bg-[#1a251a] hover:bg-red-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-red-400 transition-colors border border-[#243324]"
-                            >
+                            <button onClick={() => handleDelete(item.id)}
+                              className="w-8 h-8 bg-[#1a251a] hover:bg-red-900/40 rounded-lg flex items-center justify-center text-green-600 hover:text-red-400 transition-colors border border-[#243324]">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           )}
