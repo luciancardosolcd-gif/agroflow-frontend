@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import {
   DollarSign, TrendingUp, TrendingDown,
-  Wallet, BarChart2, RefreshCw, Plus,
-  ChevronDown
+  Wallet, BarChart2, ChevronDown
 } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import SemPermissao from '@/components/ui/SemPermissao'
@@ -20,14 +19,14 @@ function KpiCard({ title, value, icon, color, sub }: {
   title: string; value: string; icon: React.ReactNode; color: string; sub?: string
 }) {
   return (
-    <div className={`rounded-xl px-4 py-3 border ${color} flex flex-col gap-1.5`}>
+    <div className={`rounded-xl px-3 py-2 border ${color} flex flex-col gap-1`}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-gray-400">{title}</span>
-        <div className="p-1.5 rounded-lg bg-white/5">{icon}</div>
+        <span className="text-[11px] font-medium text-gray-400">{title}</span>
+        <div className="p-1 rounded-md bg-white/5">{icon}</div>
       </div>
       <div>
-        <p className="text-base font-bold text-white leading-tight">{value}</p>
-        {sub && <p className="text-xs text-gray-500 mt-0.5">{sub}</p>}
+        <p className="text-sm font-bold text-white leading-tight">{value}</p>
+        {sub && <p className="text-[10px] text-gray-500">{sub}</p>}
       </div>
     </div>
   )
@@ -88,21 +87,7 @@ export default function FinanceiroPage() {
   if (!autorizado)         return <SemPermissao />
 
   return (
-    <div className="space-y-5">
-
-      <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-green-500/10">
-          <DollarSign className="w-6 h-6 text-green-400" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-white">Financeiro</h1>
-          <p className="text-xs text-gray-400">
-            {propriedadeId
-              ? `Exibindo: ${propriedades.find(p => p.id === propriedadeId)?.nome ?? 'Propriedade selecionada'}`
-              : 'Lançamentos de receitas e despesas.'}
-          </p>
-        </div>
-      </div>
+    <div className="space-y-3">
 
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-red-400 text-sm">
@@ -110,7 +95,8 @@ export default function FinanceiroPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* KPI cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
         <KpiCard title="Receitas"
           value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
           icon={<TrendingUp className="w-4 h-4 text-emerald-400" />}
@@ -130,6 +116,7 @@ export default function FinanceiroPage() {
           sub="Margem de lucro" />
       </div>
 
+      {/* Tabs — Contas a Pagar / Receber */}
       <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
         <button
           onClick={() => setTabsAbertas(prev => !prev)}
@@ -145,12 +132,12 @@ export default function FinanceiroPage() {
         )}
       </div>
 
+      {/* Lista completa */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
         endpoint="/financeiro"
         fields={fields}
-        icon={<DollarSign className="w-8 h-8 text-green-400" />}
         fazendaId={propriedadeId || ''}
         safraId={safraId || undefined}
       />
