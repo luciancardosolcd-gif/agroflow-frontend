@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import api from '@/lib/api'
 import {
@@ -38,23 +38,8 @@ const gerarClima = () => ({
   condicao:    ['Ensolarado','Parcialmente nublado','Nublado','Chuva leve'][Math.floor(Math.random()*4)],
 })
 
-const ALL_NAV = [
-  { href: '/dashboard',    label: 'Início',         modulo: null,           perfis: ['admin','gestor','operador','agronomo','visitante','produtor'] },
-  { href: '/clientes',     label: 'Clientes',        modulo: 'clientes',     perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/financeiro',   label: 'Financeiro',      modulo: 'financeiro',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/contratos',    label: 'Contratos',       modulo: 'contratos',    perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/estoque',      label: 'Estoque',         modulo: 'estoque',      perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/fornecedores', label: 'Fornecedores',    modulo: 'fornecedores', perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/maquinarios',  label: 'Maquinários',     modulo: 'maquinarios',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/documentos',   label: 'Documentos',      modulo: 'documentos',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/produtor',     label: 'Painel Produtor', modulo: 'produtor',     perfis: ['admin','produtor','agronomo','visitante'] },
-  { href: '/relatorios',   label: 'Relatórios',      modulo: 'relatorios',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/users',        label: 'Usuários',        modulo: null,           perfis: ['admin'] },
-]
-
 export default function DashboardPage() {
-  const router   = useRouter()
-  const pathname = usePathname()
+  const router = useRouter()
 
   const [perfil,     setPerfil]     = useState('')
   const [permissoes, setPermissoes] = useState<Record<string, any>>({})
@@ -106,39 +91,8 @@ export default function DashboardPage() {
     }, 800)
   }
 
-  const navVisivel = ALL_NAV.filter(item =>
-    item.perfis.includes(perfil) && temPermissao(item.modulo)
-  )
-
   return (
     <div className="space-y-4">
-
-      {/* Nav tabs */}
-      <div className="w-full overflow-x-auto scrollbar-none">
-        <div className="flex items-center border-b border-white/8 min-w-max">
-          {navVisivel.map(item => {
-            const active = pathname === item.href
-            return (
-              <button
-                key={item.href}
-                onClick={() => router.push(item.href)}
-                className={`
-                  relative px-4 py-2.5 text-sm font-medium
-                  transition-all duration-200 whitespace-nowrap select-none
-                  ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
-                `}
-              >
-                {item.label}
-                <span className={`
-                  absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
-                  transition-all duration-300
-                  ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
-                `}/>
-              </button>
-            )
-          })}
-        </div>
-      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -163,7 +117,7 @@ export default function DashboardPage() {
       </div>
 
       {/* CotaçãoFlow */}
-      <div className="rounded-2xl border border-yellow-500/20 bg-yellow-500/3 p-5">
+      <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-yellow-400" />
