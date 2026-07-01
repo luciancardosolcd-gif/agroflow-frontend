@@ -18,8 +18,8 @@ function Logo() {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 444 205"
-      width="160"
-      height="63"
+      width="178"
+      height="70"
       role="img"
       aria-label="AgroFlow – Gestão Agrícola"
       style={{ display: 'block' }}
