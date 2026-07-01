@@ -39,36 +39,18 @@ const gerarClima = () => ({
 })
 
 const ALL_NAV = [
-  { href: '/dashboard',   label: 'Início',         modulo: null,           perfis: ['admin','gestor','operador','agronomo','visitante','produtor'] },
-  { href: '/clientes',    label: 'Clientes',        modulo: 'clientes',     perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/financeiro',  label: 'Financeiro',      modulo: 'financeiro',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/contratos',   label: 'Contratos',       modulo: 'contratos',    perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/estoque',     label: 'Estoque',         modulo: 'estoque',      perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/fornecedores',label: 'Fornecedores',    modulo: 'fornecedores', perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/maquinarios', label: 'Maquinários',     modulo: 'maquinarios',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/documentos',  label: 'Documentos',      modulo: 'documentos',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/produtor',    label: 'Painel Produtor', modulo: 'produtor',     perfis: ['admin','produtor','agronomo','visitante'] },
-  { href: '/relatorios',  label: 'Relatórios',      modulo: 'relatorios',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
-  { href: '/users',       label: 'Usuários',        modulo: null,           perfis: ['admin'] },
+  { href: '/dashboard',    label: 'Início',         modulo: null,           perfis: ['admin','gestor','operador','agronomo','visitante','produtor'] },
+  { href: '/clientes',     label: 'Clientes',        modulo: 'clientes',     perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/financeiro',   label: 'Financeiro',      modulo: 'financeiro',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/contratos',    label: 'Contratos',       modulo: 'contratos',    perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/estoque',      label: 'Estoque',         modulo: 'estoque',      perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/fornecedores', label: 'Fornecedores',    modulo: 'fornecedores', perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/maquinarios',  label: 'Maquinários',     modulo: 'maquinarios',  perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/documentos',   label: 'Documentos',      modulo: 'documentos',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/produtor',     label: 'Painel Produtor', modulo: 'produtor',     perfis: ['admin','produtor','agronomo','visitante'] },
+  { href: '/relatorios',   label: 'Relatórios',      modulo: 'relatorios',   perfis: ['admin','gestor','operador','agronomo','visitante'] },
+  { href: '/users',        label: 'Usuários',        modulo: null,           perfis: ['admin'] },
 ]
-
-function AgroFlowLogo() {
-  return (
-    <div className="flex items-center gap-2.5">
-      <svg width="36" height="36" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="44" height="44" rx="10" fill="#0d1a0d"/>
-        <line x1="22" y1="36" x2="22" y2="18" stroke="#15803d" strokeWidth="2.2" strokeLinecap="round"/>
-        <path d="M22 8C22 8 10 14 10 24C10 30.6 15.4 36 22 36C28.6 36 34 30.6 34 24C34 14 22 8 22 8Z" fill="#22c55e"/>
-        <path d="M22 26C19 23 14 21 11 18" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
-        <path d="M22 22C25 19 29 18 33 16" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
-      </svg>
-      <div>
-        <p className="text-lg font-bold text-white leading-none tracking-tight">AgroFlow</p>
-        <p className="text-[10px] text-green-500 leading-none mt-0.5 tracking-wide">Gestão Agrícola</p>
-      </div>
-    </div>
-  )
-}
 
 export default function DashboardPage() {
   const router   = useRouter()
@@ -131,35 +113,30 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4">
 
-      {/* Logo + nav compactos no topo */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <AgroFlowLogo />
-        </div>
-        <div className="w-full overflow-x-auto scrollbar-none">
-          <div className="flex items-center border-b border-white/8 min-w-max">
-            {navVisivel.map(item => {
-              const active = pathname === item.href
-              return (
-                <button
-                  key={item.href}
-                  onClick={() => router.push(item.href)}
-                  className={`
-                    relative px-4 py-2.5 text-sm font-medium
-                    transition-all duration-200 whitespace-nowrap select-none
-                    ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
-                  `}
-                >
-                  {item.label}
-                  <span className={`
-                    absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
-                    transition-all duration-300
-                    ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
-                  `}/>
-                </button>
-              )
-            })}
-          </div>
+      {/* Nav tabs */}
+      <div className="w-full overflow-x-auto scrollbar-none">
+        <div className="flex items-center border-b border-white/8 min-w-max">
+          {navVisivel.map(item => {
+            const active = pathname === item.href
+            return (
+              <button
+                key={item.href}
+                onClick={() => router.push(item.href)}
+                className={`
+                  relative px-4 py-2.5 text-sm font-medium
+                  transition-all duration-200 whitespace-nowrap select-none
+                  ${active ? 'text-white' : 'text-gray-500 hover:text-gray-300'}
+                `}
+              >
+                {item.label}
+                <span className={`
+                  absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-green-500
+                  transition-all duration-300
+                  ${active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'}
+                `}/>
+              </button>
+            )
+          })}
         </div>
       </div>
 
