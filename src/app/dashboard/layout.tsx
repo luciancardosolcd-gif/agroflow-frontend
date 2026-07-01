@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Cookies from 'js-cookie'
 import SafraSeletor from '@/components/SafraSeletor'
-import { Bell, Search } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { usePropriedade } from '@/contexts/PropriedadeContext'
 
 function Logo() {
@@ -105,19 +105,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <header className="bg-[#0d160d] border-b border-[#1a251a] flex-shrink-0 sticky top-0 z-30 w-full">
 
-        {/* Linha principal: logo + search + SafraSeletor + usuário */}
+        {/* Linha principal: logo + SafraSeletor + usuário */}
         <div className="h-20 flex items-center justify-between px-8">
 
           <div className="flex items-center">
             <Logo />
           </div>
 
-          <div className="flex items-center gap-3 mx-10 flex-1 max-w-2xl">
-            <div className="flex items-center gap-3 bg-[#1a251a] rounded-xl px-4 py-2.5 w-full border border-[#243324]">
-              <Search className="w-4 h-4 text-green-600 flex-shrink-0" />
-              <input placeholder="Buscar..."
-                className="bg-transparent text-sm text-green-300 placeholder-green-700 outline-none w-full" />
-            </div>
+          <div className="flex items-center gap-3 mx-10 flex-1 max-w-2xl justify-center">
             <SafraSeletor />
           </div>
 
