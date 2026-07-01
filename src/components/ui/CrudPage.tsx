@@ -22,23 +22,25 @@ interface CrudPageProps {
   safraId?: string
 }
 
-function AgroFlowLogo() {
   return (
-    <div className="flex items-center gap-2.5">
-      <svg width="38" height="38" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="44" height="44" rx="10" fill="#0d1a0d"/>
-        <line x1="22" y1="36" x2="22" y2="18" stroke="#15803d" strokeWidth="2.2" strokeLinecap="round"/>
-        <path d="M22 8C22 8 10 14 10 24C10 30.6 15.4 36 22 36C28.6 36 34 30.6 34 24C34 14 22 8 22 8Z" fill="#22c55e"/>
-        <path d="M22 26C19 23 14 21 11 18" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
-        <path d="M22 22C25 19 29 18 33 16" stroke="#15803d" strokeWidth="1.4" strokeLinecap="round"/>
-      </svg>
-      <div>
-        <p className="text-lg font-bold text-white leading-none tracking-tight">AgroFlow</p>
-        <p className="text-[10px] text-green-500 leading-none mt-0.5 tracking-wide">Gestão Agrícola</p>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-white">{title}</h2>
+          <p className="text-xs text-green-600">
+            {items.length} registro{items.length !== 1 ? 's' : ''} encontrado{items.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={load} className="btn-secondary"><RefreshCw className="w-4 h-4" /></button>
+          {canCreate && (
+            <button onClick={handleNew} className="btn-primary">
+              <Plus className="w-4 h-4" />Novo
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  )
-}
+      {/* ... resto igual */}
 
 export default function CrudPage({
   title, endpoint, fields, icon, fazendaId, safraId
