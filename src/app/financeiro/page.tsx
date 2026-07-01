@@ -5,7 +5,7 @@ import Cookies from 'js-cookie'
 import {
   DollarSign, TrendingUp, TrendingDown,
   Wallet, BarChart2, RefreshCw, Plus,
-  MapPin, Sprout, ChevronDown
+  ChevronDown
 } from 'lucide-react'
 import CrudPage from '@/components/ui/CrudPage'
 import SemPermissao from '@/components/ui/SemPermissao'
@@ -15,13 +15,6 @@ import { usePropriedade } from '@/contexts/PropriedadeContext'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-
-const PERIODOS: { value: PeriodoFiltro; label: string }[] = [
-  { value: 'MES_ATUAL',    label: 'Mês Atual'    },
-  { value: 'MES_ANTERIOR', label: 'Mês Anterior' },
-  { value: 'TRIMESTRE',    label: 'Trimestre'    },
-  { value: 'ANO_ATUAL',    label: 'Ano Atual'    },
-]
 
 function KpiCard({ title, value, icon, color, sub }: {
   title: string; value: string; icon: React.ReactNode; color: string; sub?: string
@@ -55,14 +48,16 @@ export default function FinanceiroPage() {
 
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
   const [canCreate,  setCanCreate]  = useState(false)
-  const [periodo,    setPeriodo]    = useState<PeriodoFiltro>('ANO_ATUAL')
   const [tabsAbertas, setTabsAbertas] = useState(false)
 
   const {
     propriedades, safrasFiltradas,
     propriedadeId, setPropriedadeId,
     safraId, setSafraId,
+    periodo: periodoCtx, setPeriodo: setPeriodoCtx,
   } = usePropriedade()
+  const periodo    = (periodoCtx || 'ANO_ATUAL') as PeriodoFiltro
+  const setPeriodo = (v: PeriodoFiltro) => setPeriodoCtx(v)
 
   const { data, loading, error, refetch } = useDashboardFinanceiro(
     periodo, propriedadeId, safraId
@@ -95,61 +90,6 @@ export default function FinanceiroPage() {
   return (
     <div className="space-y-5">
 
-      {/* ── Barra de filtros no topo (acima do cabeçalho) ── */}
-      <div className="flex items-center gap-2 flex-wrap justify-end">
-        {propriedades.length > 0 && (
-          <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
-            <MapPin className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-            <select
-              value={propriedadeId}
-              onChange={e => setPropriedadeId(e.target.value)}
-              className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[140px]"
-            >
-              <option value="">Todas propriedades</option>
-              {propriedades.map(p => (
-                <option key={p.id} value={p.id}>{p.nome}</option>
-              ))}
-            </select>
-            <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
-          </div>
-        )}
-
-        {safrasFiltradas.length > 0 && (
-          <div className="flex items-center gap-1.5 bg-[#111811] border border-[#1e2e1e] rounded-lg px-3 py-1.5 hover:border-[#2a3e2a] transition-colors">
-            <Sprout className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
-            <select
-              value={safraId}
-              onChange={e => setSafraId(e.target.value)}
-              className="bg-transparent text-xs text-gray-300 outline-none cursor-pointer max-w-[120px]"
-            >
-              <option value="">Todas safras</option>
-              {safrasFiltradas.map(s => (
-                <option key={s.id} value={s.id}>{s.nome}</option>
-              ))}
-            </select>
-            <ChevronDown className="w-3 h-3 text-gray-500 flex-shrink-0" />
-          </div>
-        )}
-
-        <select
-          value={periodo}
-          onChange={(e) => setPeriodo(e.target.value as PeriodoFiltro)}
-          className="bg-white/5 border border-white/10 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500/50"
-        >
-          {PERIODOS.map((p) => (
-            <option key={p.value} value={p.value} className="bg-gray-900">{p.label}</option>
-          ))}
-        </select>
-
-        <button
-          onClick={refetch}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-gray-400 hover:text-white transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-
-      {/* ── Header (só o título) ── */}
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-xl bg-green-500/10">
           <DollarSign className="w-6 h-6 text-green-400" />
@@ -170,7 +110,6 @@ export default function FinanceiroPage() {
         </div>
       )}
 
-      {/* ── KPI cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiCard title="Receitas"
           value={loading ? '...' : formatCurrency(resumo?.totalReceitas ?? 0)}
@@ -191,7 +130,6 @@ export default function FinanceiroPage() {
           sub="Margem de lucro" />
       </div>
 
-      {/* ── Tabs — Contas a Pagar / Receber (colapsável) ── */}
       <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
         <button
           onClick={() => setTabsAbertas(prev => !prev)}
@@ -207,7 +145,6 @@ export default function FinanceiroPage() {
         )}
       </div>
 
-      {/* ── Lista completa da fazenda ── */}
       <CrudPage
         key={`${propriedadeId || 'all'}-${safraId || 'all'}`}
         title="Lançamentos"
