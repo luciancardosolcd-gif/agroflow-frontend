@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
 import CrudPage from '@/components/ui/CrudPage'
-import SemPermissao from '@/components/ui/SemPermissao'
+import SemPermissao from '@/components/ui/SemPermissao' 
 
 const fields = [
   { key: 'nome',     label: 'Nome',     required: true },
