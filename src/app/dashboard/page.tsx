@@ -118,35 +118,35 @@ export default function DashboardPage() {
 
       {/* CotaçãoFlow */}
       <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-sm font-semibold text-yellow-300">CotaçãoFlow</h2>
-            <span className="text-xs text-gray-500">Commodities Agrícolas</span>
+            <Activity className="w-4 h-4 text-yellow-400" />
+            <h2 className="text-xs font-semibold text-yellow-300">CotaçãoFlow</h2>
+            <span className="text-[10px] text-gray-500">Commodities Agrícolas</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-gray-600">
+            <span className="text-[10px] text-gray-600">
               Atualizado: {ultimaAtt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <button onClick={atualizar}
-              className="w-7 h-7 bg-yellow-900/30 border border-yellow-800/40 rounded-lg flex items-center justify-center text-yellow-600 hover:text-yellow-400">
-              <RefreshCw className={`w-3.5 h-3.5 ${loadingCot ? 'animate-spin' : ''}`} />
+              className="w-6 h-6 bg-yellow-900/30 border border-yellow-800/40 rounded-md flex items-center justify-center text-yellow-600 hover:text-yellow-400">
+              <RefreshCw className={`w-3 h-3 ${loadingCot ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
           {COMMODITIES.map(c => {
             const cot = cotacoes[c.key]
             const subiu = cot.variacao >= 0
             return (
-              <div key={c.key} className={`rounded-xl p-3 border ${c.bg} flex flex-col gap-1`}>
-                <span className="text-xs text-gray-400 font-medium">{c.label}</span>
-                <span className={`text-base font-bold ${c.cor}`}>R$ {cot.preco.toFixed(2)}</span>
-                <span className={`text-xs font-medium flex items-center gap-0.5 ${subiu ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {subiu ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              <div key={c.key} className={`rounded-lg p-1.5 border ${c.bg} flex flex-col gap-0.5`}>
+                <span className="text-[9px] text-gray-400 font-medium">{c.label}</span>
+                <span className={`text-[11px] font-bold ${c.cor}`}>R$ {cot.preco.toFixed(2)}</span>
+                <span className={`text-[9px] font-medium flex items-center gap-0.5 ${subiu ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {subiu ? <TrendingUp className="w-2.5 h-2.5" /> : <TrendingDown className="w-2.5 h-2.5" />}
                   {subiu ? '+' : ''}{cot.variacao.toFixed(2)}%
                 </span>
-                <span className="text-[10px] text-gray-600">{c.unidade}</span>
+                <span className="text-[8px] text-gray-600">{c.unidade}</span>
               </div>
             )
           })}
