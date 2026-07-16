@@ -3,10 +3,6 @@ import { useEffect, useState } from 'react'
 import Cookies from 'js-cookie'
 import CrudPage from '@/components/ui/CrudPage'
 import SemPermissao from '@/components/ui/SemPermissao'
-import { UserCheck, Map } from 'lucide-react'
-import dynamic from 'next/dynamic'
-
-const MapasPage = dynamic(() => import('./mapas/page'), { ssr: false })
 
 const fields = [
   { key: 'nome',     label: 'Nome',     required: true },
@@ -18,11 +14,8 @@ const fields = [
   { key: 'status',   label: 'Status' },
 ]
 
-type Tab = 'clientes' | 'mapas'
-
 export default function ClientesPage() {
   const [autorizado, setAutorizado] = useState<boolean | null>(null)
-  const [tab, setTab] = useState<Tab>('clientes')
 
   useEffect(() => {
     const u = Cookies.get('user')
@@ -37,6 +30,8 @@ export default function ClientesPage() {
   if (autorizado === null) return null
   if (!autorizado) return <SemPermissao />
 
+  return <CrudPage title="Clientes" endpoint="/clientes" fields={fields} />
+}
   return (
     <div className="space-y-4">
       <div className="flex border-b border-[#1a251a]">
