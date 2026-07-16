@@ -32,30 +32,3 @@ export default function ClientesPage() {
 
   return <CrudPage title="Clientes" endpoint="/clientes" fields={fields} />
 }
-  return (
-    <div className="space-y-4">
-      <div className="flex border-b border-[#1a251a]">
-        {([
-          { key: 'clientes', label: 'Clientes',      icon: UserCheck },
-          { key: 'mapas',    label: 'Mapas & Áreas', icon: Map       },
-        ] as { key: Tab; label: string; icon: any }[]).map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-5 py-2.5 text-sm font-medium border-b-2 transition-all duration-200 -mb-px ${
-              tab === t.key
-                ? 'text-white border-green-500'
-                : 'text-gray-500 border-transparent hover:text-gray-300 hover:border-gray-700'
-            }`}
-          >
-            <t.icon className="w-4 h-4" />
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'clientes' && <CrudPage title="Clientes" endpoint="/clientes" fields={fields} />}
-      {tab === 'mapas'    && <MapasPage />}
-    </div>
-  )
-}
